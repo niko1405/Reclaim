@@ -20,39 +20,41 @@
  */
 
 import { prismaClient } from '../../config/prisma-client.mts';
-import { type BuchFile, type Prisma } from '../../generated/prisma/client.ts';
+import {
+    type Prisma,
+    type ProfileAvatar,
+} from '../../generated/prisma/client.ts';
 import { getLogger } from '../../logger/logger.mts';
 import { sendmail } from '../../mail/sendmail.mts';
 import { AppProfileService } from './app-profile-service.mts';
 import {
-    IsbnExistsError,
     NotFoundError,
     VersionInvalidError,
     VersionOutdatedError,
 } from './errors.mts';
 
-export type BuchCreate = Prisma.BuchCreateInput;
-type BuchCreated = Prisma.BuchGetPayload<{
+export type AppProfileCreate = Prisma.AppProfileCreateInput;
+type AppProfileCreated = Prisma.AppProfileGetPayload<{
     include: {
-        titel: true;
-        abbildungen: true;
+        trackingConfig: true;
+        screentimeLogs: true;
     };
 }>;
 
-export type BuchUpdate = Prisma.BuchUpdateInput;
+export type AppProfileUpdate = Prisma.AppProfileUpdateInput;
 /** Typdefinitionen zum Aktualisieren eines Buches mit `update`. */
 export type UpdateParams = {
     /** ID des zu aktualisierenden Buches. */
-    readonly id: number | undefined;
+    readonly id: string | undefined;
     /** Buch-Objekt mit den aktualisierten Werten. */
-    readonly buch: BuchUpdate;
+    readonly appProfile: AppProfileUpdate;
     /** Versionsnummer für die zu aktualisierenden Werte. */
     readonly version: string;
 };
-type BuchUpdated = Prisma.BuchGetPayload<{}>;
+type AppProfileUpdated = Prisma.AppProfileGetPayload<{}>;
 
-type BuchFileCreate = Prisma.BuchFileUncheckedCreateInput;
-export type BuchFileCreated = Prisma.BuchFileGetPayload<{}>;
+type ProfileAvatarCreate = Prisma.ProfileAvatarUncheckedCreateInput;
+export type ProfileAvatarCreated = Prisma.ProfileAvatarGetPayload<{}>;
 
 /**
  * Die Klasse `BuchWriteService` implementiert den Anwendungskern für das
@@ -71,184 +73,173 @@ export class AppProfileWriteService {
     }
 
     /**
-     * Ein neues Buch soll angelegt werden.
-     * @param buch Das neu abzulegende Buch
-     * @returns Die ID des neu angelegten Buches
-     * @throws IsbnExists falls die ISBN-Nummer bereits existiert
+     * Ein neues App-Profil wird asynchron angelegt.
+     *
+     * @param appProfile zu erstellendes App-Profil
+     * @returns ID des neu angelegten App-Profils
      */
-    async create(buch: BuchCreate) {
-        this.#logger.debug('create: buch=%o', buch);
-        await this.#validateCreate(buch);
+    async create(appProfile: AppProfileCreate) {
+        this.#logger.debug('create: buch=%o', appProfile);
 
-        // Neuer Datensatz mit generierter ID
-        let buchDb: BuchCreated | undefined;
+        let appProfileDb: AppProfileCreated | undefined;
         await prismaClient.$transaction(async (tx) => {
-            buchDb = await tx.buch.create({
-                data: buch,
-                include: { titel: true, abbildungen: true },
+            appProfileDb = await tx.appProfile.create({
+                data: appProfile,
+                include: { trackingConfig: true, screentimeLogs: true },
             });
         });
         await this.#sendmail({
-            id: buchDb?.id ?? 'N/A',
-            titel: buchDb?.titel?.titel ?? 'N/A',
+            id: appProfileDb?.id ?? 'N/A',
+            titel: appProfileDb?.displayName ?? 'N/A',
         });
 
-        this.#logger.debug('create: buchDb.id=%s', buchDb?.id);
-        return buchDb?.id ?? Number.NaN;
+        this.#logger.debug('create: appProfileDb.id=%s', appProfileDb?.id);
+        return appProfileDb?.id;
     }
 
     /**
-     * Zu einem vorhandenen Buch eine Binärdatei mit z.B. einem Bild abspeichern.
-     * @param buchId ID des vorhandenen Buches
-     * @param data Bytes der Datei als Buffer Node
-     * @param name Dateiname
-     * @param size Dateigröße in Bytes
-     * @param type MIME-Typ, z.B. image/png
-     * @returns Entity-Objekt für `BuchFile`
+     * Upload Avatar for an existing App Profile. If an avatar already exists for the profile, it will be deleted and replaced.
+     * @param appProfileId ID of the App Profile for which the avatar should be uploaded
+     * @param data Buffer with the avatar file data
+     * @param name Filename of the avatar
+     * @param size Size of the avatar file in bytes
+     * @param type MIME type of the avatar file
+     * @returns The created ProfileAvatar or undefined if the App Profile does not exist
      */
-    // eslint-disable-next-line max-params
-    async addFile(
-        buchId: number,
+    async uploadAvatar(
+        appProfileId: string,
         data: Buffer,
         name: string,
         size: number,
         type: string,
-    ): Promise<Readonly<BuchFile> | undefined> {
+    ): Promise<Readonly<ProfileAvatar> | undefined> {
         this.#logger.debug(
-            'addFile: buchId=%d, filename=%s, size=%d',
-            buchId,
+            'uploadAvatar: appProfileId=%s, filename=%s, size=%d',
+            appProfileId,
             name,
             size,
         );
 
         // TODO Dateigroesse pruefen
 
-        let buchFileCreated: BuchFileCreated | undefined;
+        let profileAvatarCreated: ProfileAvatarCreated | undefined;
         await prismaClient.$transaction(async (tx) => {
-            // Buch ermitteln, falls vorhanden
-            const buch = await tx.buch.findUnique({
-                where: { id: buchId },
+            const appProfile = await tx.appProfile.findUnique({
+                where: { id: appProfileId },
             });
-            if (buch === null) {
-                this.#logger.debug('Es gibt kein Buch mit der ID %d', buchId);
+            if (appProfile === null) {
+                this.#logger.debug(
+                    'Es gibt kein App-Profil mit der ID %s',
+                    appProfileId,
+                );
                 throw new NotFoundError(
-                    `Es gibt kein Buch mit der ID ${buchId}.`,
+                    `Es gibt kein App-Profil mit der ID ${appProfileId}.`,
                 );
             }
 
-            // evtl. vorhandene Datei löschen
-            await tx.buchFile.deleteMany({ where: { buchId } });
+            // delete existing avatar for the profile, if any
+            await tx.profileAvatar.deleteMany({
+                where: { profileId: appProfileId },
+            });
 
-            const buchFile: BuchFileCreate = {
+            const profileAvatar: ProfileAvatarCreate = {
                 filename: name,
-                data: data as Uint8Array<ArrayBuffer>,
+                fileData: data as Uint8Array<ArrayBuffer>,
                 mimetype: type,
-                buchId,
+                fileSizeBytes: data?.byteLength,
+                profileId: appProfileId,
             };
-            buchFileCreated = await tx.buchFile.create({ data: buchFile });
+            profileAvatarCreated = await tx.profileAvatar.create({
+                data: profileAvatar,
+            });
         });
 
         this.#logger.debug(
             'addFile: id=%s, byteLength=%s, filename=%s, mimetype=%s',
-            buchFileCreated?.id,
-            buchFileCreated?.data.byteLength,
-            buchFileCreated?.filename,
-            buchFileCreated?.mimetype,
+            profileAvatarCreated?.id,
+            profileAvatarCreated?.fileData.byteLength,
+            profileAvatarCreated?.filename,
+            profileAvatarCreated?.mimetype,
         );
-        return buchFileCreated;
+        return profileAvatarCreated;
     }
 
     /**
-     * Ein vorhandenes Buch soll aktualisiert werden. "Destructured" Argument
-     * mit id (ID des zu aktualisierenden Buchs), buch (zu aktualisierendes Buch)
-     * und version (Versionsnummer für optimistische Synchronisation).
-     * @returns Die neue Versionsnummer gemäß optimistischer Synchronisation
-     * @throws NotFoundException falls kein Buch zur ID vorhanden ist
-     * @throws VersionInvalidException falls die Versionsnummer ungültig ist
-     * @throws VersionOutdatedException falls die Versionsnummer veraltet ist
+     * Update an existing App Profile. The version number is checked to prevent lost updates. If the version number is outdated, a VersionOutdatedError is thrown. If the version number is invalid, a VersionInvalidError is thrown. If the App Profile with the given ID does not exist, a NotFoundError is thrown.
+     * @param param0 Object with the following properties:
+     * - id: ID of the App Profile to be updated
+     * - appProfile: AppProfileUpdate object with the updated values
+     * - version: version number for optimistic locking, must be in the format '"<number>"', e.g. '"0"'
+     * @returns The new version number of the updated App Profile
      */
     // https://2ality.com/2015/01/es6-destructuring.html#simulating-named-parameters-in-javascript
-    async update({ id, buch, version }: UpdateParams) {
+    async update({ id, appProfile, version }: UpdateParams) {
         this.#logger.debug(
-            'update: id=%s, buch=%o, version=%s',
+            'update: id=%s, appProfile=%o, version=%s',
             id,
-            buch,
+            appProfile,
             version,
         );
         if (id === undefined) {
             this.#logger.debug('update: Keine gueltige ID');
-            throw new NotFoundError(`Es gibt kein Buch mit der ID ${id}.`);
+            throw new NotFoundError(
+                `Es gibt kein App-Profil mit der ID ${id}.`,
+            );
         }
 
+        // prohibit lost updates by checking the version before updating the book
         await this.#validateUpdate(id, version);
 
-        buch.version = { increment: 1 };
-        let buchUpdated: BuchUpdated | undefined;
+        appProfile.version = { increment: 1 };
+        let appProfileUpdated: AppProfileUpdated | undefined;
         await prismaClient.$transaction(async (tx) => {
-            buchUpdated = await tx.buch.update({
-                data: buch,
+            appProfileUpdated = await tx.appProfile.update({
+                data: appProfile,
                 where: { id },
             });
         });
         this.#logger.debug(
-            'update: buchUpdated=%s',
-            JSON.stringify(buchUpdated),
+            'update: appProfileUpdated=%s',
+            JSON.stringify(appProfileUpdated),
         );
 
-        return buchUpdated?.version ?? Number.NaN;
+        return appProfileUpdated?.version ?? Number.NaN;
     }
 
     /**
-     * Ein Buch wird asynchron anhand seiner ID gelöscht.
+     * Ein App-Profil wird asynchron anhand seiner ID gelöscht.
      *
-     * @param id ID des zu löschenden Buches
-     * @returns true, falls das Buch vorhanden war und gelöscht wurde. Sonst false.
+     * @param id ID des zu löschenden App-Profils
+     * @returns true, falls das App-Profil vorhanden war und gelöscht wurde. Sonst false.
      */
-    async delete(id: number) {
-        this.#logger.debug('delete: id=%d', id);
+    async delete(id: string) {
+        this.#logger.debug('delete: id=%s', id);
 
-        const buch = await prismaClient.buch.findUnique({
+        const appProfile = await prismaClient.appProfile.findUnique({
             where: { id },
         });
-        if (buch === null) {
+        if (appProfile === null) {
             this.#logger.debug('delete: not found');
             return false;
         }
 
         await prismaClient.$transaction(async (tx) => {
-            await tx.buch.delete({ where: { id } });
+            await tx.appProfile.delete({ where: { id } });
         });
 
         this.#logger.debug('delete');
         return true;
     }
 
-    async #validateCreate({
-        isbn,
-    }: Prisma.BuchCreateInput): Promise<undefined> {
-        this.#logger.debug('#validateCreate: isbn=%s', isbn);
-        if (isbn === undefined) {
-            this.#logger.debug('#validateCreate: ok');
-            return;
-        }
-
-        const anzahl = await prismaClient.buch.count({ where: { isbn } });
-        if (anzahl > 0) {
-            this.#logger.debug('#validateCreate: isbn existiert: %s', isbn);
-            throw new IsbnExistsError(isbn);
-        }
-        this.#logger.debug('#validateCreate: ok');
-    }
-
-    async #sendmail({ id, titel }: { id: number | 'N/A'; titel: string }) {
-        const subject = `Neues Buch ${id}`;
-        const body = `Das Buch mit dem Titel <strong>${titel}</strong> ist angelegt`;
+    async #sendmail({ id, titel }: { id: string | 'N/A'; titel: string }) {
+        const subject = `Neues App-Profil ${id}`;
+        const body = `Das App-Profil mit dem Titel <strong>${titel}</strong> ist angelegt`;
         await sendmail({ subject, body });
     }
 
-    async #validateUpdate(id: number, versionStr: string) {
+    async #validateUpdate(id: string, versionStr: string) {
         this.#logger.debug(
-            '#validateUpdate: id=%d, versionStr=%s',
+            '#validateUpdate: id=%s, versionStr=%s',
             id,
             versionStr,
         );
@@ -257,9 +248,9 @@ export class AppProfileWriteService {
         }
 
         const version = Number.parseInt(versionStr.slice(1, -1), 10);
-        const buchDb = await this.#readService.findById({ id });
+        const appProfileDb = await this.#readService.findById({ id });
 
-        if (version < buchDb.version) {
+        if (version < appProfileDb.version) {
             this.#logger.debug('#validateUpdate: versionDb=%d', version);
             throw new VersionOutdatedError(version);
         }
