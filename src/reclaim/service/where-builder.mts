@@ -26,14 +26,15 @@ import { type QueryParams } from './queryparams.mts';
 const logger = getLogger('buildWhere', 'func');
 
 /**
- * WHERE-Klausel für die flexible Suche nach Büchern bauen.
- * @param suchparameter JSON-Objekt mit Suchparameter. Bei "titel" wird mit
- * einem Teilstring gesucht, bei "rating" mit einem Mindestwert, bei "preis"
- * mit der Obergrenze.
- * @returns BuchWhereInput
+ * Building WHERE-Clause for Prisma-Query by provided query parameters.
+ * @param queryparams - Query-Parameter aus der URL, z.B. `?displayName=John&currentStreak=5`
+ * @returns Prisma WHERE-Input, z.B. `{ displayName: { contains: 'John', mode: 'insensitive' }, currentStreak: { gte: 5 } }`
+ * @see https://www.prisam.io/docs/concepts/components/prisma-client/where-filtering
+ * @see https://www.prisam.io/docs/concepts/components/prisma-client/query-filters#string-filters
+ * @see https://www.prisam.io/docs/concepts/components/prisma-client/query-filters#number-filters
+ * @see https://www.prisam.io/docs/concepts/components/prisma-client/query-filters#boolean-filters
+ * @see https://www.prisam.io/docs/concepts/components/prisma-client/query-filters#date-filters
  */
-// "rest properties" ab ES 2018 https://github.com/tc39/proposal-object-rest-spread
-// eslint-disable-next-line max-lines-per-function, prettier/prettier, sonarjs/cognitive-complexity
 export const buildWhere = (queryparams: QueryParams) => {
     logger.debug('build: queryparams=%o', queryparams);
 

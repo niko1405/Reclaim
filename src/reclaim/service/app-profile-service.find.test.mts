@@ -98,7 +98,7 @@ describe('AppProfileService find', () => {
 
         // when / then
         await expect(service.find(suchparameter, pageable)).rejects.toThrow(
-            /^Keine Buecher gefunden/,
+            /^Keine AppProfiles gefunden/,
         );
     });
 });

@@ -165,7 +165,6 @@ router.delete('/:id', rolesRequired('admin'), async (c) => {
     return c.body(null, 204);
 });
 
-// TODO Upload von Profilbildern in einem eigenen Router implementieren, z.B. unter /app-profiles/:id/avatar
 router.post('/:id', rolesRequired('admin', 'user'), async (c) => {
     const id = c.req.param('id') ?? '-1';
     logger.debug('upload: id=%s', id);
@@ -191,18 +190,12 @@ router.post('/:id', rolesRequired('admin', 'user'), async (c) => {
             `Ungueltiger Typ beim Upload: ${typeof file}`,
         );
     }
-    const idNumber = parseInt(id, 10);
+
     const { name, size, type } = file;
     logger.debug('upload: name=%s, size=%d, type=%s', name, size, type);
     const buffer = Buffer.from(await file.arrayBuffer());
     const profileAvatar: ProfileAvatarCreated | undefined =
-        await appProfileWriteService.addFile(
-            idNumber,
-            buffer,
-            name,
-            size,
-            type,
-        );
+        await appProfileWriteService.uploadAvatar(id, buffer, name, size, type);
     logger.debug(
         'upload: id=%s, byteLength=%s, filename=%s, mimetype=%s',
         profileAvatar?.id,

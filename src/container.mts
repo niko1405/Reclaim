@@ -23,8 +23,6 @@ const appProfileService = new AppProfileService();
 /**
  * Container mit Singletons zur Emulation von manueller DI (ähnlich wie ein
  * Container beim Spring Framework.
- *
- * @author [Jürgen Zimmermann](mailto:Juergen.Zimmermann@h-ka.de)
  */
 export const container = {
     appProfileService,

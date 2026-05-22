@@ -15,8 +15,8 @@
 
 import { type AppProfileWithTrackingConfigAndScreentimeLogs } from '../service/app-profile-service.mts';
 import {
-    type BuchCreate,
-    type BuchUpdate,
+    type AppProfileCreate,
+    type AppProfileUpdate,
 } from '../service/app-profile-write-service.mts';
 import { type QueryParams } from '../service/queryparams.mts';
 
@@ -267,7 +267,7 @@ export type BuchNeuInput = {
     abbildungen?: { beschriftung: string; contentType: string }[];
 };
 
-export const toCreate = (buch: BuchNeuInput): BuchCreate => {
+export const toCreate = (buch: BuchNeuInput): AppProfileCreate => {
     const {
         isbn,
         rating,
@@ -281,7 +281,7 @@ export const toCreate = (buch: BuchNeuInput): BuchCreate => {
         titel,
         abbildungen,
     } = buch;
-    const buchCreate: BuchCreate = {
+    const buchCreate: AppProfileCreate = {
         version: 0,
         isbn,
         rating,
@@ -324,7 +324,7 @@ export type BuchUpdateInput = Omit<BuchNeuInput, 'titel' | 'abbildungen'> & {
     version: Int;
 };
 
-export const toUpdate = (buch: BuchUpdateInput): BuchUpdate => {
+export const toUpdate = (buch: BuchUpdateInput): AppProfileUpdate => {
     const {
         version,
         isbn,
@@ -337,7 +337,7 @@ export const toUpdate = (buch: BuchUpdateInput): BuchUpdate => {
         homepage,
         schlagwoerter,
     } = buch;
-    const buchUpdate: BuchUpdate = {
+    const buchUpdate: AppProfileUpdate = {
         version,
         isbn,
         rating,

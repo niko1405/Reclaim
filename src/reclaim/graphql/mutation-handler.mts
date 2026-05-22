@@ -17,9 +17,9 @@ import { GraphQLError } from 'graphql';
 import { container } from '../../container.mts';
 import { getLogger } from '../../logger/logger.mts';
 import {
-    BuchNeuSchema,
+    AppProfilePostSchema,
     BuchUpdateGraphQLSchema,
-} from '../router/buch-validation.mts';
+} from '../router/app-profile-validation.mts';
 import { NotFoundError } from '../service/errors.mts';
 import {
     type BuchNeuInput,
@@ -45,7 +45,7 @@ const { buchWriteService, keycloakService } = container;
 // Validierung mit Zod
 const validateBuchNeu = (buch: BuchNeuInput) => {
     try {
-        BuchNeuSchema.parse(buch);
+        AppProfilePostSchema.parse(buch);
     } catch (err) {
         if (err instanceof Error) {
             const { message } = err;

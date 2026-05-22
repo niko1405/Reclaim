@@ -49,10 +49,6 @@ import {
 import { router as authRouter } from './security/auth-router.mts';
 import { ForbiddenError, UnauthorizedError } from './security/errors.mts';
 
-/**
- * Web-Applikation mit Hono.
- * @author [Jürgen Zimmermann](mailto:Juergen.Zimmermann@h-ka.de)
- */
 export const app = new Hono();
 
 const logger = getLogger('app', 'file');
@@ -60,9 +56,6 @@ const logger = getLogger('app', 'file');
 // -----------------------------------------------------------------------------
 // M i d d l e w a r e
 // -----------------------------------------------------------------------------
-
-// Globale Middleware muss vor den Routen registriert werden
-// https://hono.dev/docs/guides/middleware#execution-order
 
 // Zusaetzliche Security-Header
 const securityHeaders = createMiddleware(async (c: Context, next: Next) => {
@@ -72,9 +65,6 @@ const securityHeaders = createMiddleware(async (c: Context, next: Next) => {
     await next();
 });
 
-// https://hono.dev/docs/middleware/builtin/secure-headers
-// https://hono.dev/docs/middleware/builtin/cors
-// https://hono.dev/docs/middleware/builtin/compress
 app.use(secureHeaders(), cors(corsOptions), securityHeaders, compress());
 
 app.use(trackMetrics);
