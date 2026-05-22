@@ -19,6 +19,7 @@ model AppProfile {
   timezone            String   @default("Europe/Berlin")
   currentStreak       Int      @default(0) @map("current_streak")
   onboardingCompleted Boolean  @default(false) @map("onboarding_completed")
+  version             Int      @default(0)
   erzeugt             DateTime @default(now()) @db.Timestamp(6)
   aktualisiert        DateTime @default(now()) @db.Timestamp(6)
 
