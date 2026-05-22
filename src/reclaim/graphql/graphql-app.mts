@@ -15,9 +15,6 @@
 
 // Yoga wird auch bei Elysia genutzt: https://elysiajs.com/plugins/graphql-yoga
 
-// Die Integration vom Apollo Server in Hono ist aufwaendig:
-// https://www.oluwasetemi.dev/blog/building-apollo-server-hono-integration
-
 import { createSchema, createYoga } from 'graphql-yoga';
 import { Hono } from 'hono';
 import { getLogger } from '../../logger/logger.mts';
@@ -27,17 +24,17 @@ import {
     tokenHandler,
     updateHandler,
 } from './mutation-handler.mts';
-import { buchHandler, buecherHandler } from './query-handler.mts';
+import { appProfileHandler, appProfilesHandler } from './query-handler.mts';
 import { rolesRequired } from './roles-required.mts';
 import {
-    type BuchNeuInput,
-    type BuchUpdateInput,
-    ID,
+    type AppProfilePostInput,
+    type AppProfileUpdateInput,
+    type ID,
     type SuchParameterInput,
     typeDefs,
 } from './types.mts';
 
-const logger = getLogger('query-handler', 'file');
+const logger = getLogger('graphql-app', 'file');
 type GraphqlContext = {
     request: Request;
 };
@@ -47,26 +44,26 @@ type GraphqlContext = {
 // -----------------------------------------------------------------------------
 const resolvers = {
     Query: {
-        buch: (_: unknown, { id }: { id: ID }) => buchHandler(id),
-        buecher: (_: unknown, { input }: { input?: SuchParameterInput }) =>
-            buecherHandler(input),
+        appProfile: (_: unknown, { id }: { id: ID }) => appProfileHandler(id),
+        appProfiles: (_: unknown, { input }: { input?: SuchParameterInput }) =>
+            appProfilesHandler(input as never),
     },
     Mutation: {
         create: async (
             _: unknown,
-            { input }: { input: BuchNeuInput },
+            { input }: { input: AppProfilePostInput },
             { request }: GraphqlContext,
         ) => {
             await rolesRequired(request, 'admin', 'user');
-            return createHandler(input);
+            return createHandler(input as never);
         },
         update: async (
             _: unknown,
-            { input }: { input: BuchUpdateInput },
+            { input }: { input: AppProfileUpdateInput },
             { request }: GraphqlContext,
         ) => {
             await rolesRequired(request, 'admin', 'user');
-            return updateHandler(input);
+            return updateHandler(input as never);
         },
         delete: async (
             _: unknown,

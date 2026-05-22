@@ -23,36 +23,133 @@ import {
 import { NotFoundError } from '../service/errors.mts';
 import { createPageable } from '../service/pageable.mts';
 import { type Slice } from '../service/slice.mts';
-import {
-    SuchParameterInput,
-    toAppProfileType,
-    toSuchparameter,
-    type AppProfile,
-    type ID,
-} from './types.mts';
+
+type ID = string & { readonly __brand: 'ID' };
+
+type SuchParameterInput = {
+    readonly displayName?: string;
+    readonly avatarUrl?: string;
+    readonly statusMsg?: string;
+    readonly timezone?: string;
+    readonly currentStreak?: number;
+    readonly onBoardingCompleted?: boolean;
+    readonly erzeugt?: string;
+    readonly aktualisiert?: string;
+};
+
+type AppProfile = {
+    readonly id: ID;
+    readonly version: number;
+    readonly displayName: string;
+    readonly avatarUrl: string | null;
+    readonly statusMessage: string | null;
+    readonly timezone: string;
+    readonly currentStreak: number;
+    readonly onboardingCompleted: boolean;
+    readonly erzeugt: string;
+    readonly aktualisiert: string;
+    readonly trackingConfig: {
+        readonly id: ID;
+        readonly dailyLimitMinutes: number;
+        readonly isPublic: boolean;
+        readonly notificationsEnabled: boolean;
+        readonly erzeugt: string;
+        readonly aktualisiert: string;
+    } | null;
+    readonly screentimeLogs: Array<{
+        readonly id: ID;
+        readonly logDate: string;
+        readonly totalMinutes: number;
+        readonly topApp: string | null;
+        readonly erzeugt: string;
+        readonly aktualisiert: string;
+    }> | null;
+};
+
+const toID = (value: string | number): ID =>
+    (typeof value === 'string' ? value : value.toString()) as ID;
+
+const toAppProfileType = (
+    appProfile: AppProfileWithTrackingConfigAndScreentimeLogs,
+): AppProfile => {
+    const trackingConfig = appProfile.trackingConfig;
+    const screentimeLogs = appProfile.screentimeLogs;
+
+    return {
+        id: toID(appProfile.id),
+        version: appProfile.version,
+        displayName: appProfile.displayName,
+        avatarUrl: appProfile.avatarUrl,
+        statusMessage: appProfile.statusMessage,
+        timezone: appProfile.timezone,
+        currentStreak: appProfile.currentStreak,
+        onboardingCompleted: appProfile.onboardingCompleted,
+        erzeugt: appProfile.erzeugt.toISOString(),
+        aktualisiert: appProfile.aktualisiert.toISOString(),
+        trackingConfig:
+            trackingConfig === null
+                ? null
+                : {
+                      id: toID(trackingConfig.id),
+                      dailyLimitMinutes: trackingConfig.dailyLimitMinutes,
+                      isPublic: trackingConfig.isPublic,
+                      notificationsEnabled: trackingConfig.notificationsEnabled,
+                      erzeugt: trackingConfig.erzeugt.toISOString(),
+                      aktualisiert: trackingConfig.aktualisiert.toISOString(),
+                  },
+        screentimeLogs:
+            screentimeLogs === null
+                ? null
+                : screentimeLogs.map((log) => ({
+                      id: toID(log.id),
+                      logDate: log.logDate.toISOString(),
+                      totalMinutes: log.totalMinutes,
+                      topApp: log.topApp,
+                      erzeugt: log.erzeugt.toISOString(),
+                      aktualisiert: log.aktualisiert.toISOString(),
+                  })),
+    };
+};
+
+const toSuchparameter = (param?: SuchParameterInput) => {
+    if (param === undefined) {
+        return undefined;
+    }
+
+    const suchparameter: Record<string, unknown> = {};
+    if (param.displayName !== undefined)
+        suchparameter['displayName'] = param.displayName;
+    if (param.avatarUrl !== undefined)
+        suchparameter['avatarUrl'] = param.avatarUrl;
+    if (param.statusMsg !== undefined)
+        suchparameter['statusMsg'] = param.statusMsg;
+    if (param.timezone !== undefined)
+        suchparameter['timezone'] = param.timezone;
+    if (param.currentStreak !== undefined)
+        suchparameter['currentStreak'] = param.currentStreak;
+    if (param.onBoardingCompleted !== undefined)
+        suchparameter['onBoardingCompleted'] = param.onBoardingCompleted;
+    if (param.erzeugt !== undefined) suchparameter['erzeugt'] = param.erzeugt;
+    if (param.aktualisiert !== undefined)
+        suchparameter['aktualisiert'] = param.aktualisiert;
+    return suchparameter;
+};
 
 const logger = getLogger('query-handler', 'file');
 
-export const buchHandler = async (id: ID) => {
-    logger.debug('buchHandler: id=%s', id);
+export const appProfileHandler = async (id: ID) => {
+    logger.debug('appProfileHandler: id=%s', id);
 
-    let buch: AppProfile;
+    let appProfile: AppProfile;
     try {
-        const buchDB: AppProfileWithTrackingConfigAndScreentimeLogs =
-            await container.buchService.findById({
-                id: Number.parseInt(id, 10),
-            });
-        buch = toAppProfileType(buchDB);
+        const appProfileDb: AppProfileWithTrackingConfigAndScreentimeLogs =
+            await container.appProfileService.findById({ id });
+        appProfile = toAppProfileType(appProfileDb);
     } catch (err) {
         if (err instanceof NotFoundError) {
-            logger.debug('buchHandler: Kein Buch gefunden.');
-            // GraphQLError wird von Yoga gefangen und in die Property "errors"
-            // vom Response-Body transformiert.
-            // https://the-guild.dev/graphql/yoga-server/tutorial/basic/09-error-handling
+            logger.debug('appProfileHandler: Kein AppProfile gefunden.');
             throw new GraphQLError(err.message, {
                 extensions: {
-                    // https://the-guild.dev/graphql/yoga-server/docs/features/error-masking#error-codes-and-other-extensions
-                    // https://www.apollographql.com/docs/apollo-server/data/errors
                     code: 'BAD_USER_INPUT',
                 },
             });
@@ -66,26 +163,28 @@ export const buchHandler = async (id: ID) => {
         });
     }
 
-    logger.debug('buchHandler: result=%o', buch);
-    return buch;
+    logger.debug('appProfileHandler: result=%o', appProfile);
+    return appProfile;
 };
 
-export const buecherHandler = async (
+export const appProfilesHandler = async (
     input?: SuchParameterInput | undefined,
 ) => {
-    logger.debug('buecherHandler: input=%o', input ?? 'undefined');
+    logger.debug('appProfilesHandler: input=%o', input ?? 'undefined');
     const pageable = createPageable({});
     const suchparameter = toSuchparameter(input);
 
-    let buecherSlice: Readonly<Slice<Readonly<AppProfileWithTrackingConfig>>>;
+    let appProfileSlice: Readonly<
+        Slice<Readonly<AppProfileWithTrackingConfig>>
+    >;
     try {
-        buecherSlice = await container.buchService.find(
+        appProfileSlice = await container.appProfileService.find(
             suchparameter,
             pageable,
         );
     } catch (err) {
         if (err instanceof NotFoundError) {
-            logger.debug('Keine Buecher gefunden.');
+            logger.debug('Keine AppProfiles gefunden.');
             throw new GraphQLError(err.message, {
                 extensions: {
                     code: 'BAD_USER_INPUT',
@@ -100,11 +199,16 @@ export const buecherHandler = async (
             },
         });
     }
-    logger.debug('buecherHandler: buecherSlice=%o', buecherSlice);
 
-    const result = buecherSlice.content.map((buch) =>
-        toAppProfileType(buch as AppProfileWithTrackingConfigAndScreentimeLogs),
+    logger.debug('appProfilesHandler: appProfileSlice=%o', appProfileSlice);
+    const result = appProfileSlice.content.map((appProfile) =>
+        toAppProfileType(
+            appProfile as AppProfileWithTrackingConfigAndScreentimeLogs,
+        ),
     );
-    logger.debug('buecherHandler: result=%o', result);
+    logger.debug('appProfilesHandler: result=%o', result);
     return result;
 };
+
+export const buchHandler = appProfileHandler;
+export const buecherHandler = appProfilesHandler;

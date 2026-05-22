@@ -14,38 +14,124 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 import { GraphQLError } from 'graphql';
+import { randomUUID } from 'node:crypto';
 import { container } from '../../container.mts';
 import { getLogger } from '../../logger/logger.mts';
 import {
     AppProfilePostSchema,
-    BuchUpdateGraphQLSchema,
+    AppProfileUpdateGraphQLSchema,
 } from '../router/app-profile-validation.mts';
 import { NotFoundError } from '../service/errors.mts';
-import {
-    type BuchNeuInput,
-    type BuchUpdateInput,
-    type CreatePayload,
-    type DeletePayload,
-    type ID,
-    type UpdatePayload,
-    toCreate,
-    toID,
-    toInt,
-    toNumber,
-    toUpdate,
-} from './types.mts';
+
+type ID = string & { readonly __brand: 'ID' };
+type Int = number & { readonly __brand: 'Int' };
+
+type AppProfilePostInput = {
+    readonly displayName: string;
+    readonly avatarUrl?: string | null;
+    readonly statusMessage?: string | null;
+    readonly timezone: string;
+    readonly currentStreak: number;
+    readonly onboardingCompleted: boolean;
+    readonly trackingConfig?: {
+        readonly dailyLimitMinutes: number;
+        readonly isPublic: boolean;
+        readonly notificationsEnabled: boolean;
+    } | null;
+    readonly screentimeLogs?: Array<{
+        readonly logDate: string;
+        readonly totalMinutes: number;
+        readonly topApp?: string | null;
+    }> | null;
+};
+
+type AppProfileUpdateInput = {
+    readonly id: ID;
+    readonly version: Int;
+    readonly displayName?: string;
+    readonly avatarUrl?: string | null;
+    readonly statusMessage?: string | null;
+    readonly timezone?: string;
+    readonly currentStreak?: number;
+    readonly onboardingCompleted?: boolean;
+};
+
+type CreatePayload = { readonly id: ID };
+type UpdatePayload = { readonly version: Int };
+type DeletePayload = { readonly success: boolean };
+
+const toID = (value: string | number): ID =>
+    (typeof value === 'string' ? value : value.toString()) as ID;
+const toInt = (value: number): Int => value as Int;
+
+const toCreate = (appProfile: AppProfilePostInput) => ({
+    id: randomUUID(),
+    version: 0,
+    displayName: appProfile.displayName,
+    avatarUrl: appProfile.avatarUrl ?? null,
+    statusMessage: appProfile.statusMessage ?? null,
+    timezone: appProfile.timezone,
+    currentStreak: appProfile.currentStreak,
+    onboardingCompleted: appProfile.onboardingCompleted,
+    ...(appProfile.trackingConfig === undefined ||
+    appProfile.trackingConfig === null
+        ? {}
+        : {
+              trackingConfig: {
+                  create: {
+                      dailyLimitMinutes:
+                          appProfile.trackingConfig.dailyLimitMinutes,
+                      isPublic: appProfile.trackingConfig.isPublic,
+                      notificationsEnabled:
+                          appProfile.trackingConfig.notificationsEnabled,
+                  },
+              },
+          }),
+    ...(appProfile.screentimeLogs === undefined ||
+    appProfile.screentimeLogs === null
+        ? {}
+        : {
+              screentimeLogs: {
+                  create: appProfile.screentimeLogs.map((log) => ({
+                      logDate: new Date(log.logDate),
+                      totalMinutes: log.totalMinutes,
+                      topApp: log.topApp ?? null,
+                  })),
+              },
+          }),
+});
+
+const toUpdate = (appProfile: AppProfileUpdateInput) => {
+    const appProfileUpdate: Record<string, unknown> = {
+        version: { increment: 1 },
+    };
+    if (appProfile.displayName !== undefined)
+        appProfileUpdate['displayName'] = appProfile.displayName;
+    if (appProfile.avatarUrl !== undefined)
+        appProfileUpdate['avatarUrl'] = appProfile.avatarUrl;
+    if (appProfile.statusMessage !== undefined)
+        appProfileUpdate['statusMessage'] = appProfile.statusMessage;
+    if (appProfile.timezone !== undefined)
+        appProfileUpdate['timezone'] = appProfile.timezone;
+    if (appProfile.currentStreak !== undefined)
+        appProfileUpdate['currentStreak'] = appProfile.currentStreak;
+    if (appProfile.onboardingCompleted !== undefined)
+        appProfileUpdate['onboardingCompleted'] =
+            appProfile.onboardingCompleted;
+    return appProfileUpdate;
+};
 
 const logger = getLogger('mutation-handler', 'file');
-const { buchWriteService, keycloakService } = container;
+const { appProfileWriteService, keycloakService } = container;
 
 // -----------------------------------------------------------------------------
 // N e u a n l e g e n
 // -----------------------------------------------------------------------------
 
 // Validierung mit Zod
-const validateBuchNeu = (buch: BuchNeuInput) => {
+const validateAppProfilePost = (appProfile: AppProfilePostInput) => {
     try {
-        AppProfilePostSchema.parse(buch);
+        AppProfilePostSchema.parse(appProfile);
     } catch (err) {
         if (err instanceof Error) {
             const { message } = err;
@@ -73,22 +159,30 @@ const validateBuchNeu = (buch: BuchNeuInput) => {
         }
     }
 
-    logger.debug('validateBuchNeu: ok');
+    logger.debug('validateAppProfilePost: ok');
 };
 
 export const createHandler = async (
-    input: BuchNeuInput,
+    input: AppProfilePostInput,
 ): Promise<CreatePayload> => {
     logger.debug('createHandler: input=%o', input);
 
     // Validierung mit Zod
-    validateBuchNeu(input);
+    validateAppProfilePost(input);
 
-    const buchCreate = toCreate(input);
-    logger.debug('createHandler: buchCreate=%o', buchCreate);
-    const id = await buchWriteService.create(buchCreate);
+    const appProfileCreate = toCreate(input);
+    logger.debug('createHandler: appProfileCreate=%o', appProfileCreate);
+    const id = await appProfileWriteService.create(appProfileCreate as never);
 
-    logger.debug('createHandler: id=%d', id);
+    logger.debug('createHandler: id=%s', id);
+    if (id === undefined) {
+        throw new GraphQLError('Es konnte keine ID erzeugt werden.', {
+            extensions: {
+                code: 'INTERNAL_SERVER_ERROR',
+            },
+        });
+    }
+
     return { id: toID(id) };
 };
 
@@ -97,9 +191,9 @@ export const createHandler = async (
 // -----------------------------------------------------------------------------
 
 // Validierung mit Zod
-const validateBuchUpdate = (buch: BuchUpdateInput) => {
+const validateAppProfileUpdate = (appProfile: AppProfileUpdateInput) => {
     try {
-        BuchUpdateGraphQLSchema.parse(buch);
+        AppProfileUpdateGraphQLSchema.parse(appProfile);
     } catch (err) {
         if (err instanceof Error) {
             const { message } = err;
@@ -127,30 +221,30 @@ const validateBuchUpdate = (buch: BuchUpdateInput) => {
         }
     }
 
-    logger.debug('validateBuchUpdate: ok');
+    logger.debug('validateAppProfileUpdate: ok');
 };
 
 export const updateHandler = async (
-    input: BuchUpdateInput,
+    input: AppProfileUpdateInput,
 ): Promise<UpdatePayload> => {
     logger.debug('updateHandler: input=%o', input);
 
     // Validierung mit Zod
-    validateBuchUpdate(input);
+    validateAppProfileUpdate(input);
 
-    const buchUpdate = toUpdate(input);
-    logger.debug('updateHandler: buchUpdate=%o', buchUpdate);
+    const appProfileUpdate = toUpdate(input);
+    logger.debug('updateHandler: appProfileUpdate=%o', appProfileUpdate);
 
     let version: number | undefined;
     try {
-        version = await buchWriteService.update({
-            id: toNumber(input.id),
-            buch: buchUpdate,
+        version = await appProfileWriteService.update({
+            id: input.id,
+            appProfile: toUpdate(input) as never,
             version: `"${input.version}"`,
         });
     } catch (err) {
         if (err instanceof NotFoundError) {
-            logger.debug('buchHandler: Kein Buch gefunden.');
+            logger.debug('updateHandler: Kein AppProfile gefunden.');
             throw new GraphQLError(err.message, {
                 extensions: {
                     code: 'BAD_USER_INPUT',
@@ -168,7 +262,7 @@ export const updateHandler = async (
 // -----------------------------------------------------------------------------
 export const deleteHandler = async (id: ID) => {
     logger.debug('deleteHandler: id=%s', id);
-    const success = await buchWriteService.delete(toNumber(id));
+    const success = await appProfileWriteService.delete(id);
     const payload: DeletePayload = { success };
     return payload;
 };
