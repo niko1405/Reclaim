@@ -14,7 +14,7 @@
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Das Modul besteht aus Router für die Verwaltung von Bücher.
+ * Das Modul besteht aus Router für die Verwaltung von App-Profilen.
  * @packageDocumentation
  */
 
@@ -28,11 +28,8 @@ const { appProfileService } = container;
 
 export const router = new Hono();
 
-const logger = getLogger('buch-router', 'file');
+const logger = getLogger('app-profile-router', 'file');
 
-// -----------------------------------------------------------------------------
-// S u c h e   m i t   P f a d - P a r a m e t e r
-// -----------------------------------------------------------------------------
 router.get('/:id', async (c) => {
     const { req } = c;
 
@@ -43,18 +40,14 @@ router.get('/:id', async (c) => {
 
     const appProfile = await appProfileService.findById({ id });
 
-    // ETags
-    // https://hono.dev/docs/api/request#header
     const ifNoneMatch = req.header('If-None-Match');
     const { version } = appProfile;
     if (ifNoneMatch === `"${version}"`) {
-        logger.debug('get: Not Modified');
-        // https://hono.dev/docs/api/context#body
         return c.body(null, 304);
     }
 
     logger.debug('get: version=%d', version);
-    // https://hono.dev/docs/api/context#header
+
     const { header, json } = c;
     header('ETag', `"${version}"`);
 
@@ -62,16 +55,15 @@ router.get('/:id', async (c) => {
     return json(appProfile);
 });
 
-// -----------------------------------------------------------------------------
-// S u c h e   m i t   Q u e r y - P a r a m e t e r
-// -----------------------------------------------------------------------------
 router.get('/', async (c) => {
     const { req } = c;
 
     if (!checkAccept(req)) return c.body(null, 406);
 
     const queryParams = req.query();
+
     const countOnly = queryParams['count-only'];
+    // Only count the number of app profiles if the query parameter "count-only" is set to "true"
     if (countOnly !== undefined) {
         const count = await appProfileService.count();
         logger.debug('get: count=%d', count);
@@ -95,24 +87,17 @@ router.get('/', async (c) => {
     return c.json(appProfilePage);
 });
 
-// -----------------------------------------------------------------------------
-// D o w n l o a d
-// -----------------------------------------------------------------------------
 router.get('/file/:id', async (c) => {
     const id = c.req.param('id');
     logger.debug('download: id=%s', id);
-    const idNumber = Number.parseInt(id, 10);
-    if (Number.isNaN(idNumber)) {
+
+    const avatarFile = await appProfileService.findAvatarByAppProfileId(id);
+    if (avatarFile === undefined) {
         return c.notFound();
     }
 
-    const buchFile = await appProfileService.findFileByBuchId(idNumber);
-    if (buchFile === undefined) {
-        return c.notFound();
-    }
-
-    return c.body(buchFile.data, {
-        headers: { 'Content-Type': buchFile.mimetype ?? '' },
+    return c.body(avatarFile.fileData, {
+        headers: { 'Content-Type': avatarFile.mimetype ?? '' },
     });
 });
 
