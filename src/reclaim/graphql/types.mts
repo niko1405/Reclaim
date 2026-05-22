@@ -13,6 +13,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <https://www.gnu.org/licenses/>.
 
+import { randomUUID } from 'node:crypto';
 import { type AppProfileWithTrackingConfigAndScreentimeLogs } from '../service/app-profile-service.mts';
 import {
     type AppProfileCreate,
@@ -25,8 +26,7 @@ import { type QueryParams } from '../service/queryparams.mts';
 // -----------------------------------------------------------------------------
 
 // Ein "branded type" bleibt derselbe Typ im Typsystem, erhaelt aber eine
-// zusaetzliche Property, die NUR im Typsystem verfuegbar ist
-// siehe https://www.learningtypescript.com/articles/branded-types
+// zusaetzliche Property, die NUR im Typsystem verfuegbar ist.
 export type ID = string & { readonly __brand: 'ID' };
 export type Int = number & { readonly __brand: 'Int' };
 
@@ -36,50 +36,66 @@ export const toID = (value: string | number): ID => {
     }
     return value.toString() as ID;
 };
+
 export const toInt = (num: number): Int =>
     (Number.isInteger(num) ? num : Math.round(num)) as Int;
+
 export const toNumber = (id: ID): number => Number.parseInt(id, 10);
-const toDateOrNull = (dateStr?: string | null): Date | null =>
-    dateStr === undefined || dateStr === null ? null : new Date(dateStr);
+
+const toLogDate = (dateStr: string): Date => new Date(dateStr);
 
 // -----------------------------------------------------------------------------
 // G r a p h Q L   S c h e m a
 // -----------------------------------------------------------------------------
 export const typeDefs = /* GraphQL */ `
-    "Bücherdaten lesen"
+    "Read-Operations for AppProfiles"
     type Query {
-        buch(id: ID!): Buch!
-        buecher(input: SuchParameterInput): [Buch!]!
+        appProfile(id: ID!): AppProfile!
+        appProfiles(input: SuchParameterInput): [AppProfile!]!
     }
 
-    "Bücher neu anlegen, aktualisieren oder löschen"
+    "AppProfiles neu anlegen, aktualisieren oder loeschen"
     type Mutation {
-        create(input: BuchNeuInput!): CreatePayload!
-        update(input: BuchUpdateInput!): UpdatePayload
+        create(input: AppProfilePostInput!): CreatePayload!
+        update(input: AppProfileUpdateInput!): UpdatePayload
         delete(id: ID!): DeletePayload
-        token(username: String!, password: String!): TokenPayload # Mutation, wenn z.B. der Login-Zeitpunkt gespeichert wird
+        token(username: String!, password: String!): TokenPayload
     }
 
-    "Datenschema zu einem Buch, das gelesen wird"
-    type Buch {
+    "Datenschema zu einem AppProfile, das gelesen wird"
+    type AppProfile {
         id: ID!
         version: Int!
-        isbn: String!
-        rating: Int!
-        art: Buchart
-        preis: Float!
-        rabatt: Float!
-        lieferbar: Boolean!
-        datum: String
-        homepage: String
-        schlagwoerter: [String!]!
-        titel: Titel!
+        displayName: String!
+        avatarUrl: String
+        statusMessage: String
+        timezone: String!
+        currentStreak: Int!
+        onboardingCompleted: Boolean!
+        erzeugt: String!
+        aktualisiert: String!
+        trackingConfig: TrackingConfig
+        screentimeLogs: [ScreentimeLog!]
     }
 
-    "Daten zum Titel eines Buches"
-    type Titel {
-        titel: String!
-        untertitel: String
+    "Daten zur TrackingConfig eines AppProfiles, die gelesen werden"
+    type TrackingConfig {
+        id: ID!
+        dailyLimitMinutes: Int!
+        isPublic: Boolean!
+        notificationsEnabled: Boolean!
+        erzeugt: String!
+        aktualisiert: String!
+    }
+
+    "Daten zu einem ScreentimeLog eines AppProfiles"
+    type ScreentimeLog {
+        id: ID!
+        logDate: String!
+        totalMinutes: Int!
+        topApp: String
+        erzeugt: String!
+        aktualisiert: String!
     }
 
     "Generierte ID bei erfolgreichem Neuanlegen"
@@ -105,121 +121,146 @@ export const typeDefs = /* GraphQL */ `
         refresh_expires_in: Int!
     }
 
-    "Suchparameter für Bücher"
+    "Suchparameter für die Suche nach AppProfiles"
     input SuchParameterInput {
-        titel: String
-        isbn: String
-        rating: Int
-        art: Buchart
-        lieferbar: Boolean
+        displayName: String
+        avatarUrl: String
+        statusMsg: String
+        timezone: String
+        currentStreak: Int
+        onBoardingCompleted: Boolean
+        erzeugt: String
+        aktualisiert: String
     }
 
-    "Daten für ein neues Buch"
-    input BuchNeuInput {
-        isbn: String!
-        rating: Int!
-        preis: Float!
-        rabatt: Float!
-        lieferbar: Boolean!
-        art: Buchart
-        datum: String
-        homepage: String
-        schlagwoerter: [String!]!
-        titel: TitelInput!
-        abbildungen: [AbbildungInput!]
+    "Daten für ein neues AppProfile"
+    input AppProfilePostInput {
+        displayName: String!
+        avatarUrl: String
+        statusMessage: String
+        timezone: String!
+        currentStreak: Int!
+        onboardingCompleted: Boolean!
+        trackingConfig: TrackingConfigInput
+        screentimeLogs: [ScreentimeLogInput!]
     }
 
-    "Daten zum Titel eines neuen Buches"
-    input TitelInput {
-        titel: String!
-        untertitel: String
+    "Daten zur TrackingConfig eines AppProfiles"
+    input TrackingConfigInput {
+        dailyLimitMinutes: Int!
+        isPublic: Boolean!
+        notificationsEnabled: Boolean!
     }
 
-    "Daten zu den Abbildungen eines Buches"
-    input AbbildungInput {
-        beschriftung: String!
-        contentType: String!
+    "Daten zu den ScreentimeLogs eines AppProfiles"
+    input ScreentimeLogInput {
+        logDate: String!
+        totalMinutes: Int!
+        topApp: String
     }
 
-    "Daten für ein zu änderndes Buch"
-    input BuchUpdateInput {
+    "Daten für ein zu änderndes AppProfile"
+    input AppProfileUpdateInput {
         id: ID!
         version: Int!
-        isbn: String
-        rating: Int
-        art: Buchart
-        preis: Float
-        rabatt: Float
-        lieferbar: Boolean
-        datum: String
-        homepage: String
-        schlagwoerter: [String]
-    }
-
-    enum Buchart {
-        EPUB
-        HARDCOVER
-        PAPERBACK
+        displayName: String
+        avatarUrl: String
+        statusMessage: String
+        timezone: String
+        currentStreak: Int
+        onboardingCompleted: Boolean
     }
 `;
 
 // -----------------------------------------------------------------------------
-// S u c h e
+// E n t i t y   m a p p i n g s
 // -----------------------------------------------------------------------------
-export type Buch = {
-    id: ID;
-    version: number;
-    isbn: string;
-    rating?: Int;
-    art?: 'EPUB' | 'HARDCOVER' | 'PAPERBACK';
-    preis: number;
-    rabatt: string;
-    lieferbar: boolean;
-    datum?: string | undefined;
-    homepage?: string;
-    schlagwoerter: string[];
-    titel: { titel: string; untertitel?: string };
+export type TrackingConfig = {
+    readonly id: ID;
+    readonly dailyLimitMinutes: Int;
+    readonly isPublic: boolean;
+    readonly notificationsEnabled: boolean;
+    readonly erzeugt: string;
+    readonly aktualisiert: string;
 };
 
-export const toBuchType = (
-    buch: AppProfileWithTrackingConfigAndScreentimeLogs,
-): Buch => {
-    const result: Buch = {
-        id: toID(buch.id),
-        version: buch.version,
-        isbn: buch.isbn,
-        rating: toInt(buch.rating),
-        art: buch.art ?? 'HARDCOVER',
-        preis: buch.preis.toNumber(),
-        rabatt: buch.rabatt.mul(100).toFixed(2),
-        lieferbar: buch.lieferbar,
-        schlagwoerter: [],
-        titel: {
-            titel: buch.titel?.titel ?? 'N/A',
-        },
+export type ScreentimeLog = {
+    readonly id: ID;
+    readonly logDate: string;
+    readonly totalMinutes: Int;
+    readonly topApp: string | null;
+    readonly erzeugt: string;
+    readonly aktualisiert: string;
+};
+
+export type AppProfile = {
+    readonly id: ID;
+    readonly version: Int;
+    readonly displayName: string;
+    readonly avatarUrl: string | null;
+    readonly statusMessage: string | null;
+    readonly timezone: string;
+    readonly currentStreak: Int;
+    readonly onboardingCompleted: boolean;
+    readonly erzeugt: string;
+    readonly aktualisiert: string;
+    readonly trackingConfig: TrackingConfig | null;
+    readonly screentimeLogs: ScreentimeLog[] | null;
+};
+
+export const toAppProfileType = (
+    appProfile: AppProfileWithTrackingConfigAndScreentimeLogs,
+): AppProfile => {
+    const trackingConfig = appProfile.trackingConfig;
+    const screentimeLogs = appProfile.screentimeLogs;
+
+    return {
+        id: toID(appProfile.id),
+        version: toInt(appProfile.version),
+        displayName: appProfile.displayName,
+        avatarUrl: appProfile.avatarUrl,
+        statusMessage: appProfile.statusMessage,
+        timezone: appProfile.timezone,
+        currentStreak: toInt(appProfile.currentStreak),
+        onboardingCompleted: appProfile.onboardingCompleted,
+        erzeugt: appProfile.erzeugt.toISOString(),
+        aktualisiert: appProfile.aktualisiert.toISOString(),
+        trackingConfig:
+            trackingConfig === null
+                ? null
+                : {
+                      id: toID(trackingConfig.id),
+                      dailyLimitMinutes: toInt(
+                          trackingConfig.dailyLimitMinutes,
+                      ),
+                      isPublic: trackingConfig.isPublic,
+                      notificationsEnabled: trackingConfig.notificationsEnabled,
+                      erzeugt: trackingConfig.erzeugt.toISOString(),
+                      aktualisiert: trackingConfig.aktualisiert.toISOString(),
+                  },
+        screentimeLogs:
+            screentimeLogs === null
+                ? null
+                : screentimeLogs.map((log) => ({
+                      id: toID(log.id),
+                      logDate: log.logDate.toISOString(),
+                      totalMinutes: toInt(log.totalMinutes),
+                      topApp: log.topApp,
+                      erzeugt: log.erzeugt.toISOString(),
+                      aktualisiert: log.aktualisiert.toISOString(),
+                  })),
     };
-
-    // optionale Properties setzen, falls sie vorhanden sind
-    const { datum, homepage, titel } = buch;
-    if (datum !== null) {
-        result.datum = datum.toISOString();
-    }
-    if (homepage !== null) {
-        result.homepage = homepage;
-    }
-    if (titel !== null && titel.untertitel !== null) {
-        result.titel.untertitel = titel.untertitel;
-    }
-
-    return result;
 };
 
 export type SuchParameterInput = {
-    titel?: string | undefined;
-    isbn?: string | undefined;
-    rating?: Int | undefined;
-    art?: 'EPUB' | 'HARDCOVER' | 'PAPERBACK' | undefined;
-    lieferbar?: boolean | undefined;
+    displayName?: string | undefined;
+    avatarUrl?: string | undefined;
+    statusMsg?: string | undefined;
+    timezone?: string | undefined;
+    currentStreak?: Int | undefined;
+    onBoardingCompleted?: boolean | undefined;
+    erzeugt?: string | undefined;
+    aktualisiert?: string | undefined;
 };
 
 export const toSuchparameter = (param?: SuchParameterInput) => {
@@ -227,24 +268,40 @@ export const toSuchparameter = (param?: SuchParameterInput) => {
         return undefined;
     }
 
-    const { titel, isbn, rating, art, lieferbar } = param;
+    const {
+        displayName,
+        avatarUrl,
+        statusMsg,
+        timezone,
+        currentStreak,
+        onBoardingCompleted,
+        erzeugt,
+        aktualisiert,
+    } = param;
     const suchparameter: Record<string, any> = {};
-    if (titel !== undefined) {
-        suchparameter['titel'] = titel;
+    if (displayName !== undefined) {
+        suchparameter['displayName'] = displayName;
     }
-    if (isbn !== undefined) {
-        suchparameter['isbn'] = isbn;
+    if (avatarUrl !== undefined) {
+        suchparameter['avatarUrl'] = avatarUrl;
     }
-    if (rating !== undefined) {
-        suchparameter['rating'] = rating;
+    if (statusMsg !== undefined) {
+        suchparameter['statusMsg'] = statusMsg;
     }
-    if (art !== undefined) {
-        suchparameter['art'] = art;
+    if (timezone !== undefined) {
+        suchparameter['timezone'] = timezone;
     }
-    if (lieferbar !== undefined) {
-        // Boole'scher Wert bei GraphQL-Query
-        // String bei Query-Parameter bei REST
-        suchparameter['lieferbar'] = lieferbar.toString();
+    if (currentStreak !== undefined) {
+        suchparameter['currentStreak'] = currentStreak;
+    }
+    if (onBoardingCompleted !== undefined) {
+        suchparameter['onBoardingCompleted'] = onBoardingCompleted;
+    }
+    if (erzeugt !== undefined) {
+        suchparameter['erzeugt'] = erzeugt;
+    }
+    if (aktualisiert !== undefined) {
+        suchparameter['aktualisiert'] = aktualisiert;
     }
     return suchparameter as QueryParams;
 };
@@ -252,64 +309,67 @@ export const toSuchparameter = (param?: SuchParameterInput) => {
 // -----------------------------------------------------------------------------
 // N e u a n l e g e n
 // -----------------------------------------------------------------------------
-export type BuchNeuInput = {
-    isbn: string;
-    rating: Int;
-    preis: number;
-    rabatt: number;
-    lieferbar: boolean;
-    titel: { titel: string; untertitel?: string };
-
-    art?: 'EPUB' | 'HARDCOVER' | 'PAPERBACK';
-    datum?: string;
-    homepage?: string;
-    schlagwoerter?: string[];
-    abbildungen?: { beschriftung: string; contentType: string }[];
+export type AppProfilePostInput = {
+    displayName: string;
+    avatarUrl?: string | null | undefined;
+    statusMessage?: string | null | undefined;
+    timezone: string;
+    currentStreak: Int;
+    onboardingCompleted: boolean;
+    trackingConfig?: {
+        dailyLimitMinutes: Int;
+        isPublic: boolean;
+        notificationsEnabled: boolean;
+    } | null;
+    screentimeLogs?: Array<{
+        logDate: string;
+        totalMinutes: Int;
+        topApp?: string | null | undefined;
+    }> | null;
 };
 
-export const toCreate = (buch: BuchNeuInput): AppProfileCreate => {
-    const {
-        isbn,
-        rating,
-        art,
-        preis,
-        rabatt,
-        lieferbar,
-        datum,
-        homepage,
-        schlagwoerter,
-        titel,
-        abbildungen,
-    } = buch;
-    const buchCreate: AppProfileCreate = {
+export type BuchNeuInput = AppProfilePostInput;
+
+export const toCreate = (appProfile: AppProfilePostInput): AppProfileCreate => {
+    const appProfileCreate: AppProfileCreate = {
+        id: randomUUID(),
         version: 0,
-        isbn,
-        rating,
-        art: art ?? null,
-        preis,
-        rabatt,
-        lieferbar,
-        datum: toDateOrNull(datum),
-        homepage: homepage ?? null,
-        schlagwoerter: schlagwoerter ?? [],
-        titel: {
-            // fuer Prisma und die generierte Funktion "create"
-            create: {
-                titel: titel.titel,
-                untertitel: titel.untertitel ?? null,
-            },
-        },
-        abbildungen: {
-            create: (abbildungen ?? []).map((abbildung) => {
-                const { beschriftung, contentType } = abbildung;
-                return {
-                    beschriftung,
-                    contentType,
-                };
-            }),
-        },
+        displayName: appProfile.displayName,
+        avatarUrl: appProfile.avatarUrl ?? null,
+        statusMessage: appProfile.statusMessage ?? null,
+        timezone: appProfile.timezone,
+        currentStreak: appProfile.currentStreak,
+        onboardingCompleted: appProfile.onboardingCompleted,
     };
-    return buchCreate;
+
+    if (
+        appProfile.trackingConfig !== undefined &&
+        appProfile.trackingConfig !== null
+    ) {
+        appProfileCreate.trackingConfig = {
+            create: {
+                dailyLimitMinutes: appProfile.trackingConfig.dailyLimitMinutes,
+                isPublic: appProfile.trackingConfig.isPublic,
+                notificationsEnabled:
+                    appProfile.trackingConfig.notificationsEnabled,
+            },
+        };
+    }
+
+    if (
+        appProfile.screentimeLogs !== undefined &&
+        appProfile.screentimeLogs !== null
+    ) {
+        appProfileCreate.screentimeLogs = {
+            create: appProfile.screentimeLogs.map((log) => ({
+                logDate: toLogDate(log.logDate),
+                totalMinutes: log.totalMinutes,
+                topApp: log.topApp ?? null,
+            })),
+        };
+    }
+
+    return appProfileCreate;
 };
 
 export type CreatePayload = {
@@ -319,37 +379,46 @@ export type CreatePayload = {
 // -----------------------------------------------------------------------------
 // A e n d e r n
 // -----------------------------------------------------------------------------
-export type BuchUpdateInput = Omit<BuchNeuInput, 'titel' | 'abbildungen'> & {
+export type AppProfileUpdateInput = {
     id: ID;
     version: Int;
+    displayName?: string | undefined;
+    avatarUrl?: string | null | undefined;
+    statusMessage?: string | null | undefined;
+    timezone?: string | undefined;
+    currentStreak?: Int | undefined;
+    onboardingCompleted?: boolean | undefined;
 };
 
-export const toUpdate = (buch: BuchUpdateInput): AppProfileUpdate => {
-    const {
-        version,
-        isbn,
-        rating,
-        art,
-        preis,
-        rabatt,
-        lieferbar,
-        datum,
-        homepage,
-        schlagwoerter,
-    } = buch;
-    const buchUpdate: AppProfileUpdate = {
-        version,
-        isbn,
-        rating,
-        art: art ?? null,
-        preis,
-        rabatt,
-        lieferbar,
-        datum: toDateOrNull(datum),
-        homepage: homepage ?? null,
-        schlagwoerter: schlagwoerter ?? [],
+export type BuchUpdateInput = AppProfileUpdateInput;
+
+export const toUpdate = (
+    appProfile: AppProfileUpdateInput,
+): AppProfileUpdate => {
+    const appProfileUpdate: AppProfileUpdate = {
+        version: appProfile.version,
     };
-    return buchUpdate;
+
+    if (appProfile.displayName !== undefined) {
+        appProfileUpdate.displayName = appProfile.displayName;
+    }
+    if (appProfile.avatarUrl !== undefined) {
+        appProfileUpdate.avatarUrl = appProfile.avatarUrl;
+    }
+    if (appProfile.statusMessage !== undefined) {
+        appProfileUpdate.statusMessage = appProfile.statusMessage;
+    }
+    if (appProfile.timezone !== undefined) {
+        appProfileUpdate.timezone = appProfile.timezone;
+    }
+    if (appProfile.currentStreak !== undefined) {
+        appProfileUpdate.currentStreak = appProfile.currentStreak;
+    }
+    if (appProfile.onboardingCompleted !== undefined) {
+        appProfileUpdate.onboardingCompleted = appProfile.onboardingCompleted;
+    }
+
+    return appProfileUpdate;
 };
 
 export type UpdatePayload = {
@@ -370,5 +439,5 @@ export type TokenPayload = {
     readonly access_token: string;
     readonly expires_in: Int;
     readonly refresh_token: string;
-    readonly xpires_in: Int;
+    readonly refresh_expires_in: Int;
 };
