@@ -25,9 +25,9 @@ import { createPageable } from '../service/pageable.mts';
 import { type Slice } from '../service/slice.mts';
 import {
     SuchParameterInput,
-    toBuchType,
+    toAppProfileType,
     toSuchparameter,
-    type Buch,
+    type AppProfile,
     type ID,
 } from './types.mts';
 
@@ -36,13 +36,13 @@ const logger = getLogger('query-handler', 'file');
 export const buchHandler = async (id: ID) => {
     logger.debug('buchHandler: id=%s', id);
 
-    let buch: Buch;
+    let buch: AppProfile;
     try {
         const buchDB: AppProfileWithTrackingConfigAndScreentimeLogs =
             await container.buchService.findById({
                 id: Number.parseInt(id, 10),
             });
-        buch = toBuchType(buchDB);
+        buch = toAppProfileType(buchDB);
     } catch (err) {
         if (err instanceof NotFoundError) {
             logger.debug('buchHandler: Kein Buch gefunden.');
@@ -103,7 +103,7 @@ export const buecherHandler = async (
     logger.debug('buecherHandler: buecherSlice=%o', buecherSlice);
 
     const result = buecherSlice.content.map((buch) =>
-        toBuchType(buch as AppProfileWithTrackingConfigAndScreentimeLogs),
+        toAppProfileType(buch as AppProfileWithTrackingConfigAndScreentimeLogs),
     );
     logger.debug('buecherHandler: result=%o', result);
     return result;

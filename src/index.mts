@@ -28,9 +28,6 @@ if (NODE_ENV === 'development' || NODE_ENV === 'test') {
     process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 }
 
-// app.fetch ist ist eine Funktion passend zur Signatur von fetch von Bun (s.u.):
-// (request: Request) => Response | Promise<Response>
-// Innerhalb von Hono erfolgt dann das Dispatching zu einer Route fuer GET, POST, usw.
 const { fetch } = app;
 const { port, portHttp, key, cert } = serverConfig;
 
@@ -52,8 +49,6 @@ Bun.serve({
 
 await banner();
 
-// https://bun.com/docs/guides/process/os-signals
-// KEINE asynchrone Funktion
 process.on('SIGINT', () => {
     // IIFE  = Immediately Invoked Function Expression
     // IIAFE = Immediately Invoked Asynchronous Function Expression
