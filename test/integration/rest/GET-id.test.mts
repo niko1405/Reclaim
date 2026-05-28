@@ -6,6 +6,7 @@ const ids = [
     '550e8400-e29b-41d4-a716-446655440002',
 ];
 const idNichtVorhanden = '550e8400-e29b-41d4-a716-446655449999';
+const idFalsch = 'abc';
 
 describe('GET /rest/:id', () => {
     test.concurrent.each(ids)('AppProfile zu vorhandener ID %s', async (id) => {
@@ -34,6 +35,19 @@ describe('GET /rest/:id', () => {
     test.concurrent('Kein AppProfile zu nicht-vorhandener ID', async () => {
         // given
         const url = `${restURL}/${idNichtVorhanden}`;
+        const requestHeaders = new Headers();
+        requestHeaders.append('Accept', 'application/json');
+
+        // when
+        const { status } = await fetch(url, { headers: requestHeaders });
+
+        // then
+        expect(status).toBe(404);
+    });
+
+    test.concurrent('Kein AppProfile zu falscher ID', async () => {
+        // given
+        const url = `${restURL}/${idFalsch}`;
         const requestHeaders = new Headers();
         requestHeaders.append('Accept', 'application/json');
 
