@@ -98,7 +98,7 @@ const toAppProfileType = (
                       aktualisiert: trackingConfig.aktualisiert.toISOString(),
                   },
         screentimeLogs:
-            screentimeLogs === null
+            screentimeLogs == null
                 ? null
                 : screentimeLogs.map((log) => ({
                       id: toID(log.id),
