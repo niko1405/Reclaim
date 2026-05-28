@@ -16,3 +16,9 @@
 {"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"Betriebssystem: Windows_NT (10.0.26200)"}
 {"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"Username: Ryadh"}
 {"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"Docker Container: false"}
+{"level":20,"time":1780005979465,"pid":5172,"hostname":"Ryadh","file":"config/server","msg":"port = 3000"}
+{"level":20,"time":1780005979465,"pid":5172,"hostname":"Ryadh","file":"config/server","msg":"portHttp = 3030"}
+{"level":20,"time":1780005979465,"pid":5172,"hostname":"Ryadh","file":"config/server","msg":"tlsURL = file:///C:/HKA1/SWE/timetether-backend/src/config/resources/tls/"}
+{"level":20,"time":1780005980162,"pid":17852,"hostname":"Ryadh","file":"config/server","msg":"port = 3000"}
+{"level":20,"time":1780005980162,"pid":17852,"hostname":"Ryadh","file":"config/server","msg":"portHttp = 3030"}
+{"level":20,"time":1780005980163,"pid":17852,"hostname":"Ryadh","file":"config/server","msg":"tlsURL = file:///C:/HKA1/SWE/timetether-backend/src/config/resources/tls/"}

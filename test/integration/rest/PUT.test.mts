@@ -132,4 +132,22 @@ describe('PUT /rest/:id', () => {
         // then
         expect(status).toBe(422);
     });
+
+    test('Vorhandenes AppProfile aendern, aber ohne Token', async () => {
+        // given
+        const url = `${restURL}/${idVorhanden}`;
+        const headers = new Headers();
+        headers.append(CONTENT_TYPE, APPLICATION_JSON);
+        headers.append(IF_MATCH, '"0"');
+
+        // when
+        const { status } = await fetch(url, {
+            method: PUT,
+            body: JSON.stringify(geaendertesAppProfile),
+            headers,
+        });
+
+        // then
+        expect(status).toBe(401);
+    });
 });
