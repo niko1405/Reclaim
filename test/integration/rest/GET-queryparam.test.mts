@@ -10,6 +10,7 @@ type AppProfileType = {
 const displayNames = ['max', 'tech', 'dev'];
 const displayNamesNichtVorhanden = ['xxx', 'yyy', 'zzz'];
 const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
+const timezonesNichtVorhanden = ['America/New_York', 'Australia/Sydney'];
 
 describe('GET /rest', () => {
     test.concurrent('Alle AppProfiles', async () => {
@@ -108,6 +109,23 @@ describe('GET /rest', () => {
                 .forEach((timezoneFound) => {
                     expect(timezoneFound).toBe(timezone);
                 });
+        },
+    );
+
+    test.concurrent.each(timezonesNichtVorhanden)(
+        'AppProfiles zu nicht vorhandener Timezone %s suchen',
+        async (timezone) => {
+            // given
+            const params = new URLSearchParams({ timezone });
+            const url = `${restURL}?${params}`;
+            const requestHeaders = new Headers();
+            requestHeaders.append('Accept', 'application/json');
+
+            // when
+            const { status } = await fetch(url, { headers: requestHeaders });
+
+            // then
+            expect(status).toBe(404);
         },
     );
 });
