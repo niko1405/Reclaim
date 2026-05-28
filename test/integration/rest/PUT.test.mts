@@ -23,6 +23,15 @@ const geaendertesAppProfile: AppProfileUpdateType = {
 const idVorhanden = '550e8400-e29b-41d4-a716-446655440001';
 const idNichtVorhanden = '550e8400-e29b-41d4-a716-446655449999';
 
+const geaendertesAppProfileInvalid: Record<string, unknown> = {
+    displayName: '',
+    avatarUrl: 'ungueltige-url',
+    statusMessage: 'x'.repeat(241),
+    timezone: 'ungueltige-zeitzone',
+    currentStreak: -1,
+    onboardingCompleted: 'ja',
+};
+
 describe('PUT /rest/:id', () => {
     let token: string;
 
@@ -103,5 +112,24 @@ describe('PUT /rest/:id', () => {
 
         // then
         expect(status).toBe(412);
+    });
+
+    test('Vorhandenes AppProfile aendern, aber mit falschen Daten', async () => {
+        // given
+        const url = `${restURL}/${idVorhanden}`;
+        const headers = new Headers();
+        headers.append(CONTENT_TYPE, APPLICATION_JSON);
+        headers.append(IF_MATCH, '"0"');
+        headers.append(AUTHORIZATION, `${BEARER} ${token}`);
+
+        // when
+        const { status } = await fetch(url, {
+            method: PUT,
+            body: JSON.stringify(geaendertesAppProfileInvalid),
+            headers,
+        });
+
+        // then
+        expect(status).toBe(422);
     });
 });
