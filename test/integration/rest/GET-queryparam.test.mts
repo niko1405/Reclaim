@@ -7,7 +7,7 @@ type AppProfileType = {
     displayName: string;
     timezone: string;
     currentStreak: number;
-    longestStreak: number;
+    onboardingCompleted: boolean;
 };
 const displayNames = ['max', 'tech', 'dev'];
 const displayNamesNichtVorhanden = ['xxx', 'yyy', 'zzz'];
@@ -15,8 +15,7 @@ const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
 const timezonesNichtVorhanden = ['America/New_York', 'Australia/Sydney'];
 const currentStreakMin = [3, 5];
 const currentStreakMinNichtVorhanden = [100, 200];
-const longestStreakMax = [10, 20];
-const longestStreakMaxNichtVorhanden = [-1];
+const onBoardingCompletedValues = [true, false];
 
 describe('GET /rest', () => {
     test.concurrent('Alle AppProfiles', async () => {
@@ -183,12 +182,12 @@ describe('GET /rest', () => {
         },
     );
 
-    test.concurrent.each(longestStreakMax)(
-        'AppProfiles mit Maximal-LongestStreak %i suchen',
-        async (longestStreak) => {
+    test.concurrent.each(onBoardingCompletedValues)(
+        'AppProfiles mit onBoardingCompleted=%s suchen',
+        async (onBoardingCompleted) => {
             // given
             const params = new URLSearchParams({
-                longestStreak: longestStreak.toString(),
+                onBoardingCompleted: onBoardingCompleted.toString(),
             });
             const url = `${restURL}?${params}`;
             const requestHeaders = new Headers();
@@ -204,30 +203,13 @@ describe('GET /rest', () => {
 
             const body = (await response.json()) as Page<AppProfileType>;
 
+            expect(body).toBeDefined();
+
             body.content
-                .map((appProfile) => appProfile.longestStreak)
-                .forEach((streak) =>
-                    expect(streak).toBeLessThanOrEqual(longestStreak),
-                );
-        },
-    );
-
-    test.concurrent.each(longestStreakMaxNichtVorhanden)(
-        'Keine AppProfiles mit Maximal-LongestStreak %i suchen',
-        async (longestStreak) => {
-            // given
-            const params = new URLSearchParams({
-                longestStreak: longestStreak.toString(),
-            });
-            const url = `${restURL}?${params}`;
-            const requestHeaders = new Headers();
-            requestHeaders.append('Accept', 'application/json');
-
-            // when
-            const { status } = await fetch(url, { headers: requestHeaders });
-
-            // then
-            expect(status).toBe(404);
+                .map((appProfile) => appProfile.onboardingCompleted)
+                .forEach((value) => {
+                    expect(value).toBe(onBoardingCompleted);
+                });
         },
     );
 });
