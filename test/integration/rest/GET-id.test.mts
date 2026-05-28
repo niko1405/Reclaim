@@ -1,6 +1,10 @@
 import { describe, expect, test } from 'vitest';
-import { CONTENT_TYPE, restURL } from '../constants.mts';
+import { CONTENT_TYPE, IF_NONE_MATCH, restURL } from '../constants.mts';
 
+const idsETag = [
+    '550e8400-e29b-41d4-a716-446655440001',
+    '550e8400-e29b-41d4-a716-446655440002',
+];
 const ids = [
     '550e8400-e29b-41d4-a716-446655440001',
     '550e8400-e29b-41d4-a716-446655440002',
@@ -57,4 +61,26 @@ describe('GET /rest/:id', () => {
         // then
         expect(status).toBe(404);
     });
+
+    test.concurrent.each(idsETag)(
+        `AppProfile zu ID %i mit ${IF_NONE_MATCH}`,
+        async (id) => {
+            // given
+            const url = `${restURL}/${id}`;
+            const headers = new Headers();
+            headers.append('Accept', 'application/json');
+            headers.append(IF_NONE_MATCH, '"0"');
+
+            // when
+            const response = await fetch(url, { headers });
+            const { status } = response;
+
+            // then
+            expect(status).toBe(304);
+
+            const body = await response.text();
+
+            expect(body).toBe('');
+        },
+    );
 });
