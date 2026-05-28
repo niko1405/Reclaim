@@ -5,9 +5,11 @@ import { CONTENT_TYPE, restURL } from '../constants.mts';
 type AppProfileType = {
     id: string;
     displayName: string;
+    timezone: string;
 };
 const displayNames = ['max', 'tech', 'dev'];
 const displayNamesNichtVorhanden = ['xxx', 'yyy', 'zzz'];
+const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
 
 describe('GET /rest', () => {
     test.concurrent('Alle AppProfiles', async () => {
@@ -77,6 +79,35 @@ describe('GET /rest', () => {
 
             // then
             expect(status).toBe(404);
+        },
+    );
+
+    test.concurrent.each(timezones)(
+        'AppProfiles mit Timezone %s suchen',
+        async (timezone) => {
+            // given
+            const params = new URLSearchParams({ timezone });
+            const url = `${restURL}?${params}`;
+            const requestHeaders = new Headers();
+            requestHeaders.append('Accept', 'application/json');
+
+            // when
+            const response = await fetch(url, { headers: requestHeaders });
+            const { status, headers } = response;
+
+            // then
+            expect(status).toBe(200);
+            expect(headers.get(CONTENT_TYPE)).toMatch(/json/iu);
+
+            const body = (await response.json()) as Page<AppProfileType>;
+
+            expect(body).toBeDefined();
+
+            body.content
+                .map((appProfile) => appProfile.timezone)
+                .forEach((timezoneFound) => {
+                    expect(timezoneFound).toBe(timezone);
+                });
         },
     );
 });
