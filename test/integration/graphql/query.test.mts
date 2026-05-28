@@ -35,6 +35,11 @@ type AppProfileErrorsType = {
     errors: ErrorsType;
 };
 
+type AppProfilesErrorsType = {
+    data: { appProfiles: null } | null;
+    errors: ErrorsType;
+};
+
 export type ErrorsType = {
     message: string;
     path: string[];
@@ -49,6 +54,8 @@ const ids = [
 const idNichtVorhanden = '550e8400-e29b-41d4-a716-446655449999';
 
 const displayNames = ['max', 'tech', 'dev'];
+
+const displayNamesNichtVorhanden = ['xxx', 'yyy', 'zzz'];
 
 describe('GraphQL Queries', () => {
     let headers: Headers;
@@ -202,6 +209,51 @@ describe('GraphQL Queries', () => {
                         expect.stringContaining(displayName),
                     ),
                 );
+        },
+    );
+
+    test.concurrent.each(displayNamesNichtVorhanden)(
+        'AppProfiles zu nicht vorhandenem DisplayName %s suchen',
+        async (displayName) => {
+            // given
+            const query: GraphQLQuery = {
+                query: `
+                {
+                    appProfiles(input: { displayName: "${displayName}" }) {
+                        version
+                        displayName
+                        avatarUrl
+                        statusMessage
+                        timezone
+                        currentStreak
+                        onboardingCompleted
+                    }
+                }
+            `,
+            };
+
+            // when
+            const response = await fetch(graphqlURL, {
+                method: POST,
+                body: JSON.stringify(query),
+                headers,
+            });
+
+            // then
+            const { status } = response;
+
+            expect(status).toBe(200);
+            expect(response.headers.get(CONTENT_TYPE)).toMatch(
+                /application\/graphql-response\+json/iu,
+            );
+
+            const { data, errors } =
+                (await response.json()) as AppProfilesErrorsType;
+
+            expect(data).toBeNull();
+
+            expect(errors).toBeDefined();
+            expect(errors[0]?.message).toMatch(/No AppProfiles found/iu);
         },
     );
 });
