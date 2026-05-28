@@ -145,4 +145,22 @@ describe('POST /rest', () => {
 
         expect(paths).toStrictEqual(expect.arrayContaining(expectedPaths));
     });
+
+    test('Neues AppProfile ohne Token', async () => {
+        // given
+        const headers = new Headers();
+        headers.append(CONTENT_TYPE, APPLICATION_JSON);
+
+        // when
+        const response = await fetch(restURL, {
+            method: POST,
+            body: JSON.stringify(neuesAppProfile),
+            headers,
+        });
+
+        // then
+        const { status } = response;
+
+        expect(status).toBe(401);
+    });
 });
