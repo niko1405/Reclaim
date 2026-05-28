@@ -150,4 +150,23 @@ describe('PUT /rest/:id', () => {
         // then
         expect(status).toBe(401);
     });
+
+    test('Vorhandenes AppProfile aendern, aber mit falschem Token', async () => {
+        // given
+        const url = `${restURL}/${idVorhanden}`;
+        const headers = new Headers();
+        headers.append(CONTENT_TYPE, APPLICATION_JSON);
+        headers.append(IF_MATCH, '"0"');
+        headers.append(AUTHORIZATION, `${BEARER} FALSCHER_TOKEN`);
+
+        // when
+        const { status } = await fetch(url, {
+            method: PUT,
+            body: JSON.stringify(geaendertesAppProfile),
+            headers,
+        });
+
+        // then
+        expect(status).toBe(401);
+    });
 });
