@@ -21,6 +21,7 @@ const geaendertesAppProfile: AppProfileUpdateType = {
 };
 
 const idVorhanden = '550e8400-e29b-41d4-a716-446655440001';
+const idNichtVorhanden = '550e8400-e29b-41d4-a716-446655449999';
 
 describe('PUT /rest/:id', () => {
     let token: string;
@@ -46,5 +47,24 @@ describe('PUT /rest/:id', () => {
 
         // then
         expect(status).toBe(204);
+    });
+
+    test('Nicht-vorhandenes AppProfile aendern', async () => {
+        // given
+        const url = `${restURL}/${idNichtVorhanden}`;
+        const headers = new Headers();
+        headers.append(CONTENT_TYPE, APPLICATION_JSON);
+        headers.append(IF_MATCH, '"0"');
+        headers.append(AUTHORIZATION, `${BEARER} ${token}`);
+
+        // when
+        const { status } = await fetch(url, {
+            method: PUT,
+            body: JSON.stringify(geaendertesAppProfile),
+            headers,
+        });
+
+        // then
+        expect(status).toBe(404);
     });
 });
