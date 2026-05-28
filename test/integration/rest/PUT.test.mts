@@ -67,4 +67,22 @@ describe('PUT /rest/:id', () => {
         // then
         expect(status).toBe(404);
     });
+
+    test('Vorhandenes AppProfile aendern, aber ohne Versionsnummer', async () => {
+        // given
+        const url = `${restURL}/${idVorhanden}`;
+        const headers = new Headers();
+        headers.append(CONTENT_TYPE, APPLICATION_JSON);
+        headers.append(AUTHORIZATION, `${BEARER} ${token}`);
+
+        // when
+        const { status } = await fetch(url, {
+            method: PUT,
+            body: JSON.stringify(geaendertesAppProfile),
+            headers,
+        });
+
+        // then
+        expect(status).toBe(428);
+    });
 });
