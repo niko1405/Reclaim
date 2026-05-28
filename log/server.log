@@ -1,0 +1,18 @@
+{"level":20,"time":1779985830169,"pid":23484,"hostname":"Ryadh","file":"config/mail","msg":"mailConfig = {\"activated\":true,\"options\":{\"host\":\"localhost\",\"port\":1025,\"secure\":false,\"priority\":\"normal\",\"logger\":false},\"from\":\"\\\"Joe Doe\\\" <Joe.Doe@acme.com>\",\"to\":\"\\\"Foo Bar\\\" <Foo.Bar@acme.com>\"}"}
+{"level":20,"time":1779985830171,"pid":23484,"hostname":"Ryadh","file":"config/keycloak","msg":"keycloakConfig = {\"realm\":\"javascript\",\"issuer\":\"https://localhost:8843/realms/javascript\",\"jwksUri\":\"https://localhost:8843/realms/javascript/protocol/openid-connect/certs\",\"clientId\":\"javascript-client\",\"audience\":[\"account\"],\"accessTokenUrl\":\"https://localhost:8843/realms/javascript/protocol/openid-connect/token\",\"secret\":\"pSwY15e5wkkfJ6DnPs5cm2PXqbkW8Qhs\"}"}
+{"level":20,"time":1779985830209,"pid":23484,"hostname":"Ryadh","file":"config/server","msg":"port = 3000"}
+{"level":20,"time":1779985830209,"pid":23484,"hostname":"Ryadh","file":"config/server","msg":"portHttp = 3030"}
+{"level":20,"time":1779985830209,"pid":23484,"hostname":"Ryadh","file":"config/server","msg":"tlsURL = file:///C:/HKA1/SWE/timetether-backend/src/config/resources/tls/"}
+{"level":20,"time":1779985830216,"pid":23484,"hostname":"Ryadh","class":"DbPopulateService","msg":"dropScript = file:///C:/HKA1/SWE/timetether-backend/src/config/resources/postgresql/drop-table.sql"}
+{"level":20,"time":1779985830216,"pid":23484,"hostname":"Ryadh","class":"DbPopulateService","msg":"createScript = file:///C:/HKA1/SWE/timetether-backend/src/config/resources/postgresql/create-table.sql"}
+{"level":20,"time":1779985830217,"pid":23484,"hostname":"Ryadh","class":"DbPopulateService","msg":"copyScript = file:///C:/HKA1/SWE/timetether-backend/src/config/resources/postgresql/copy-csv.sql"}
+{"level":30,"time":1779985830389,"pid":23484,"hostname":"Ryadh","file":"prisma-client","msg":"Verbindung mit der DB ist hergestellt."}
+{"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"Bun: 1.3.13"}
+{"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"Bun / Node: v24.3.0"}
+{"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"NODE_ENV: development"}
+{"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"Rechnername: Ryadh"}
+{"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"Port: 3000"}
+{"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"HTTP-Port: 3030"}
+{"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"Betriebssystem: Windows_NT (10.0.26200)"}
+{"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"Username: Ryadh"}
+{"level":30,"time":1779985830404,"pid":23484,"hostname":"Ryadh","func":"banner","msg":"Docker Container: false"}

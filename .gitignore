@@ -3,3 +3,22 @@ node_modules
 .env
 
 /src/generated/prisma
+src/generated
+/log/server.log
+src/beispiele.ts
+src/beispiele-write.ts
+
+# Logs
+log
+logs
+*.log
+pnpm-debug.log*
+lerna-debug.log*
+.scannerwork
+*.exe
+log/
+*.log
+
+*.exe
+log/
+*.log

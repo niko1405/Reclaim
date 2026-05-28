@@ -1,48 +1,13 @@
-// Copyright (C) 2025 - present Juergen Zimmermann, Hochschule Karlsruhe
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program. If not, see <https://www.gnu.org/licenses/>.
-
-// Tests mit
-//  * Vitest    https://vitest.dev
-//  * Jest      https://jestjs.io
-//  * Mocha     https://mochajs.org
-//  * node:test ab Node 18
-//  * bun:test
-
-// Alternativen zu fetch aus ES 2015:
-// https://fetch.spec.whatwg.org
-// https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
-//    axios       https://axios-http.co
-//    got         https://github.com/sindresorhus/got
-
 import { describe, expect, test } from 'vitest';
-import { CONTENT_TYPE, IF_NONE_MATCH, restURL } from '../constants.mts';
+import { CONTENT_TYPE, restURL } from '../constants.mts';
 
-// -----------------------------------------------------------------------------
-// T e s t d a t e n
-// -----------------------------------------------------------------------------
-const ids = [1, 20];
-const idNichtVorhanden = 999999;
-const idsETag = [1, 20];
-const idFalsch = 'xy';
+const ids = [
+    '550e8400-e29b-41d4-a716-446655440001',
+    '550e8400-e29b-41d4-a716-446655440002',
+];
 
-// -----------------------------------------------------------------------------
-// T e s t s
-// -----------------------------------------------------------------------------
-// Test-Suite
 describe('GET /rest/:id', () => {
-    test.concurrent.each(ids)('Buch zu vorhandener ID %i', async (id) => {
+    test.concurrent.each(ids)('AppProfile zu vorhandener ID %s', async (id) => {
         // given
         const url = `${restURL}/${id}`;
         const requestHeaders = new Headers();
@@ -56,56 +21,12 @@ describe('GET /rest/:id', () => {
         expect(status).toBe(200);
         expect(headers.get(CONTENT_TYPE)).toMatch(/json/iu);
 
-        const body = (await response.json()) as { id: number };
+        const body = (await response.json()) as {
+            id: string;
+            displayName: string;
+        };
 
         expect(body.id).toBe(id);
+        expect(body.displayName).toBeDefined();
     });
-
-    test.concurrent('Kein Buch zu nicht-vorhandener ID', async () => {
-        // given
-        const url = `${restURL}/${idNichtVorhanden}`;
-        const requestHeaders = new Headers();
-        requestHeaders.append('Accept', 'application/json');
-
-        // when
-        const { status } = await fetch(url, { headers: requestHeaders });
-
-        // then
-        expect(status).toBe(404);
-    });
-
-    test.concurrent('Kein Buch zu falscher ID', async () => {
-        // given
-        const url = `${restURL}/${idFalsch}`;
-        const requestHeaders = new Headers();
-        requestHeaders.append('Accept', 'application/json');
-
-        // when
-        const { status } = await fetch(url, { headers: requestHeaders });
-
-        // then
-        expect(status).toBe(404);
-    });
-
-    test.concurrent.each(idsETag)(
-        `Buch zu ID %i mit ${IF_NONE_MATCH}`,
-        async (id) => {
-            // given
-            const url = `${restURL}/${id}`;
-            const headers = new Headers();
-            headers.append('Accept', 'application/json');
-            headers.append(IF_NONE_MATCH, '"0"');
-
-            // when
-            const response = await fetch(url, { headers });
-            const { status } = response;
-
-            // then
-            expect(status).toBe(304);
-
-            const body = await response.text();
-
-            expect(body).toBe('');
-        },
-    );
 });

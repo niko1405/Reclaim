@@ -21,15 +21,6 @@ import { createMiddleware } from 'hono/factory';
 import { secureHeaders } from 'hono/secure-headers';
 import { type ZodError } from 'zod';
 import { router as healthRouter } from './admin/health-router.mts';
-import { graphqlApp } from './buch/graphql/graphql-app.mts';
-import { router } from './buch/router/buch-router.mts';
-import { router as buchWriteRouter } from './buch/router/buch-write-router.mts';
-import {
-    IsbnExistsError,
-    NotFoundError,
-    VersionInvalidError,
-    VersionOutdatedError,
-} from './buch/service/errors.mts';
 import { corsOptions } from './config/cors.mts';
 import { router as devRouter } from './config/dev/dev-router.mts';
 import { env } from './config/env.mts';
@@ -46,6 +37,15 @@ import {
     unauthorized,
     unprocessableContent,
 } from './problem-details.mts';
+import { graphqlApp } from './reclaim/graphql/graphql-app.mts';
+import { router } from './reclaim/router/app-profile-router.mts';
+import { router as buchWriteRouter } from './reclaim/router/app-profile-write-router.mts';
+import {
+    IsbnExistsError,
+    NotFoundError,
+    VersionInvalidError,
+    VersionOutdatedError,
+} from './reclaim/service/errors.mts';
 import { router as authRouter } from './security/auth-router.mts';
 import { ForbiddenError, UnauthorizedError } from './security/errors.mts';
 

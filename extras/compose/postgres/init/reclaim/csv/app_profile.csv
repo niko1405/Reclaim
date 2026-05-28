@@ -1,6 +1,6 @@
-id;display_name;avatar_url;status_message;timezone;current_streak;onboarding_completed;erzeugt;aktualisiert
-550e8400-e29b-41d4-a716-446655440001;Max Power;https://api.dicebear.com/7.x/avataaars/svg?seed=Max;Produktivität ist alles!;Europe/Berlin;5;true;2026-04-01 10:00:00;2026-04-27 19:29:00
-550e8400-e29b-41d4-a716-446655440002;Lina Tech;;Fokus-Modus an.;Europe/Berlin;12;true;2026-04-05 14:30:00;2026-04-27 19:29:00
-550e8400-e29b-41d4-a716-446655440003;Digital Nomad;https://api.dicebear.com/7.x/avataaars/svg?seed=Nomad;Grüße aus Bali;Asia/Makassar;0;true;2026-04-10 09:15:00;2026-04-27 19:29:00
-550e8400-e29b-41d4-a716-446655440004;Karlsruhe Dev;;Endspurt Semesterprojekt!;Europe/Berlin;2;false;2026-04-20 18:45:00;2026-04-27 19:29:00
-550e8400-e29b-41d4-a716-446655440005;Focus Queen;https://api.dicebear.com/7.x/avataaars/svg?seed=Queen;Handy fast leer.;Europe/Paris;21;true;2026-04-02 11:20:00;2026-04-27 19:29:00
+id;display_name;avatar_url;status_message;timezone;current_streak;onboarding_completed;version;erzeugt;aktualisiert
+550e8400-e29b-41d4-a716-446655440001;Max Power;https://api.dicebear.com/7.x/avataaars/svg?seed=Max;Produktivität ist alles!;Europe/Berlin;5;true;0;2026-04-01 10:00:00;2026-04-27 19:29:00
+550e8400-e29b-41d4-a716-446655440002;Lina Tech;;Fokus-Modus an.;Europe/Berlin;12;true;0;2026-04-05 14:30:00;2026-04-27 19:29:00
+550e8400-e29b-41d4-a716-446655440003;Digital Nomad;https://api.dicebear.com/7.x/avataaars/svg?seed=Nomad;Grüße aus Bali;Asia/Makassar;0;true;0;2026-04-10 09:15:00;2026-04-27 19:29:00
+550e8400-e29b-41d4-a716-446655440004;Karlsruhe Dev;;Endspurt Semesterprojekt!;Europe/Berlin;2;false;0;2026-04-20 18:45:00;2026-04-27 19:29:00
+550e8400-e29b-41d4-a716-446655440005;Focus Queen;https://api.dicebear.com/7.x/avataaars/svg?seed=Queen;Handy fast leer.;Europe/Paris;21;true;0;2026-04-15 12:00:00;2026-04-27 19:29:00

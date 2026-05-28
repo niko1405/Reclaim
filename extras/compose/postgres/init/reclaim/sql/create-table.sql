@@ -53,6 +53,7 @@ CREATE TABLE IF NOT EXISTS app_profile (
                   -- https://www.postgresql.org/docs/current/datatype-boolean.html
     onboarding_completed boolean NOT NULL DEFAULT FALSE,
                   -- https://www.postgresql.org/docs/current/datatype-datetime.html
+    version              integer NOT NULL DEFAULT 0,
     erzeugt              timestamp NOT NULL DEFAULT NOW(),
     aktualisiert         timestamp NOT NULL DEFAULT NOW()
 );
