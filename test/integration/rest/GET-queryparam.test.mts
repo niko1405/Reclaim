@@ -7,6 +7,7 @@ type AppProfileType = {
     displayName: string;
     timezone: string;
     currentStreak: number;
+    longestStreak: number;
 };
 const displayNames = ['max', 'tech', 'dev'];
 const displayNamesNichtVorhanden = ['xxx', 'yyy', 'zzz'];
@@ -14,6 +15,7 @@ const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
 const timezonesNichtVorhanden = ['America/New_York', 'Australia/Sydney'];
 const currentStreakMin = [3, 5];
 const currentStreakMinNichtVorhanden = [100, 200];
+const longestStreakMax = [10, 20];
 
 describe('GET /rest', () => {
     test.concurrent('Alle AppProfiles', async () => {
@@ -177,6 +179,35 @@ describe('GET /rest', () => {
 
             // then
             expect(status).toBe(404);
+        },
+    );
+
+    test.concurrent.each(longestStreakMax)(
+        'AppProfiles mit Maximal-LongestStreak %i suchen',
+        async (longestStreak) => {
+            // given
+            const params = new URLSearchParams({
+                longestStreak: longestStreak.toString(),
+            });
+            const url = `${restURL}?${params}`;
+            const requestHeaders = new Headers();
+            requestHeaders.append('Accept', 'application/json');
+
+            // when
+            const response = await fetch(url, { headers: requestHeaders });
+            const { status, headers } = response;
+
+            // then
+            expect(status).toBe(200);
+            expect(headers.get(CONTENT_TYPE)).toMatch(/json/iu);
+
+            const body = (await response.json()) as Page<AppProfileType>;
+
+            body.content
+                .map((appProfile) => appProfile.longestStreak)
+                .forEach((streak) =>
+                    expect(streak).toBeLessThanOrEqual(longestStreak),
+                );
         },
     );
 });
