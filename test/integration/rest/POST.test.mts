@@ -11,38 +11,38 @@ import {
 } from '../constants.mts';
 import { getToken } from '../token.mts';
 
-const neuesAppProfile: AppProfilePostType = {
-    displayName: 'Post Test User',
-    avatarUrl: 'https://example.com/avatar/post-test.png',
-    statusMessage: 'Created by POST test',
-    timezone: 'Europe/Berlin',
-    currentStreak: 1,
-    onboardingCompleted: true,
-    trackingConfig: {
-        id: 999,
-        dailyLimitMinutes: 120,
-        isPublic: true,
-        notificationsEnabled: true,
-        profileId: '550e8400-e29b-41d4-a716-446655449999',
-        erzeugt: new Date('2026-01-01T00:00:00Z'),
-        aktualisiert: new Date('2026-01-01T00:00:00Z'),
-    },
-    screentimeLogs: [
-        {
-            id: 999,
-            logDate: new Date('2026-01-01T00:00:00Z'),
-            totalMinutes: 45,
-            topApp: 'Browser',
-        },
-    ],
-};
-
 describe('POST /rest', () => {
     let token: string;
 
     beforeAll(async () => {
         token = await getToken('admin', 'p');
     });
+
+    const neuesAppProfile: AppProfilePostType = {
+        displayName: 'Post Test User',
+        avatarUrl: 'https://example.com/avatar/post-test.png',
+        statusMessage: 'Created by POST test',
+        timezone: 'Europe/Berlin',
+        currentStreak: 1,
+        onboardingCompleted: true,
+        trackingConfig: {
+            id: 999,
+            dailyLimitMinutes: 120,
+            isPublic: true,
+            notificationsEnabled: true,
+            profileId: '550e8400-e29b-41d4-a716-446655449999',
+            erzeugt: new Date('2026-01-01T00:00:00Z'),
+            aktualisiert: new Date('2026-01-01T00:00:00Z'),
+        },
+        screentimeLogs: [
+            {
+                id: 999,
+                logDate: new Date('2026-01-01T00:00:00Z'),
+                totalMinutes: 45,
+                topApp: 'Browser',
+            },
+        ],
+    };
 
     test('Neues AppProfile', async () => {
         // given
