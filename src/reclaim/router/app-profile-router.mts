@@ -19,6 +19,7 @@
  */
 
 import { Hono, HonoRequest } from 'hono';
+import { z } from 'zod';
 import { container } from '../../container.mts';
 import { getLogger } from '../../logger/logger.mts';
 import { createPageable } from '../service/pageable.mts';
@@ -38,7 +39,12 @@ router.get('/:id', async (c) => {
     const id = req.param('id');
     logger.debug('get: id=%s', id);
 
-    const appProfile = await appProfileService.findById({ id });
+    const idResult = z.string().uuid().safeParse(id);
+    if (!idResult.success) {
+        return c.notFound();
+    }
+
+    const appProfile = await appProfileService.findById({ id: idResult.data });
 
     const ifNoneMatch = req.header('If-None-Match');
     const { version } = appProfile;
