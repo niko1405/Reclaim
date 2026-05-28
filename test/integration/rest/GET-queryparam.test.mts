@@ -6,11 +6,14 @@ type AppProfileType = {
     id: string;
     displayName: string;
     timezone: string;
+    currentStreak: number;
 };
 const displayNames = ['max', 'tech', 'dev'];
 const displayNamesNichtVorhanden = ['xxx', 'yyy', 'zzz'];
 const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
 const timezonesNichtVorhanden = ['America/New_York', 'Australia/Sydney'];
+const currentStreakMin = [3, 5];
+const currentStreakMinNichtVorhanden = [100, 200];
 
 describe('GET /rest', () => {
     test.concurrent('Alle AppProfiles', async () => {
@@ -117,6 +120,54 @@ describe('GET /rest', () => {
         async (timezone) => {
             // given
             const params = new URLSearchParams({ timezone });
+            const url = `${restURL}?${params}`;
+            const requestHeaders = new Headers();
+            requestHeaders.append('Accept', 'application/json');
+
+            // when
+            const { status } = await fetch(url, { headers: requestHeaders });
+
+            // then
+            expect(status).toBe(404);
+        },
+    );
+
+    test.concurrent.each(currentStreakMin)(
+        'AppProfiles mit Mindest-CurrentStreak %i suchen',
+        async (currentStreak) => {
+            // given
+            const params = new URLSearchParams({
+                currentStreak: currentStreak.toString(),
+            });
+            const url = `${restURL}?${params}`;
+            const requestHeaders = new Headers();
+            requestHeaders.append('Accept', 'application/json');
+
+            // when
+            const response = await fetch(url, { headers: requestHeaders });
+            const { status, headers } = response;
+
+            // then
+            expect(status).toBe(200);
+            expect(headers.get(CONTENT_TYPE)).toMatch(/json/iu);
+
+            const body = (await response.json()) as Page<AppProfileType>;
+
+            body.content
+                .map((appProfile) => appProfile.currentStreak)
+                .forEach((streak) =>
+                    expect(streak).toBeGreaterThanOrEqual(currentStreak),
+                );
+        },
+    );
+
+    test.concurrent.each(currentStreakMinNichtVorhanden)(
+        'Keine AppProfiles mit Mindest-CurrentStreak %i suchen',
+        async (currentStreak) => {
+            // given
+            const params = new URLSearchParams({
+                currentStreak: currentStreak.toString(),
+            });
             const url = `${restURL}?${params}`;
             const requestHeaders = new Headers();
             requestHeaders.append('Accept', 'application/json');
