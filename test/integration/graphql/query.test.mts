@@ -25,6 +25,11 @@ type AppProfileSuccessType = {
     errors?: undefined;
 };
 
+type AppProfilesSuccessType = {
+    data: { appProfiles: AppProfileDTO[] };
+    errors?: undefined;
+};
+
 type AppProfileErrorsType = {
     data: { appProfile: null } | null;
     errors: ErrorsType;
@@ -42,6 +47,8 @@ const ids = [
 ];
 
 const idNichtVorhanden = '550e8400-e29b-41d4-a716-446655449999';
+
+const displayNames = ['max', 'tech', 'dev'];
 
 describe('GraphQL Queries', () => {
     let headers: Headers;
@@ -141,4 +148,60 @@ describe('GraphQL Queries', () => {
             new RegExp(`kein AppProfile mit der ID ${idNichtVorhanden}`, 'iu'),
         );
     });
+
+    test.concurrent.each(displayNames)(
+        'AppProfiles mit Teil-DisplayName %s suchen',
+        async (displayName) => {
+            // given
+            const query: GraphQLQuery = {
+                query: `
+                {
+                    appProfiles(input: { displayName: "${displayName}" }) {
+                        version
+                        displayName
+                        avatarUrl
+                        statusMessage
+                        timezone
+                        currentStreak
+                        onboardingCompleted
+                    }
+                }
+            `,
+            };
+
+            // when
+            const response = await fetch(graphqlURL, {
+                method: POST,
+                body: JSON.stringify(query),
+                headers,
+            });
+
+            // then
+            const { status } = response;
+
+            expect(status).toBe(200);
+            expect(response.headers.get(CONTENT_TYPE)).toMatch(
+                /application\/graphql-response\+json/iu,
+            );
+
+            const { data, errors } =
+                (await response.json()) as AppProfilesSuccessType;
+
+            expect(errors).toBeUndefined();
+            expect(data).toBeDefined();
+
+            const { appProfiles } = data;
+
+            expect(appProfiles).toBeDefined();
+            expect(appProfiles.length).toBeGreaterThan(0);
+
+            appProfiles
+                .map((appProfile: AppProfileDTO) => appProfile.displayName)
+                .forEach((name: string) =>
+                    expect(name.toLowerCase()).toStrictEqual(
+                        expect.stringContaining(displayName),
+                    ),
+                );
+        },
+    );
 });
