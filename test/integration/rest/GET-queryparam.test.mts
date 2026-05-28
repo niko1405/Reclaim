@@ -7,6 +7,7 @@ type AppProfileType = {
     displayName: string;
 };
 const displayNames = ['max', 'tech', 'dev'];
+const displayNamesNichtVorhanden = ['xxx', 'yyy', 'zzz'];
 
 describe('GET /rest', () => {
     test.concurrent('Alle AppProfiles', async () => {
@@ -59,6 +60,23 @@ describe('GET /rest', () => {
                         expect.stringContaining(displayName),
                     ),
                 );
+        },
+    );
+
+    test.concurrent.each(displayNamesNichtVorhanden)(
+        'AppProfiles zu nicht vorhandenem DisplayName %s suchen',
+        async (displayName) => {
+            // given
+            const params = new URLSearchParams({ displayName });
+            const url = `${restURL}?${params}`;
+            const requestHeaders = new Headers();
+            requestHeaders.append('Accept', 'application/json');
+
+            // when
+            const { status } = await fetch(url, { headers: requestHeaders });
+
+            // then
+            expect(status).toBe(404);
         },
     );
 });
