@@ -50,12 +50,10 @@ const ids = [
     '550e8400-e29b-41d4-a716-446655440001',
     '550e8400-e29b-41d4-a716-446655440002',
 ];
-
 const idNichtVorhanden = '550e8400-e29b-41d4-a716-446655449999';
-
 const displayNames = ['max', 'tech', 'dev'];
-
 const displayNamesNichtVorhanden = ['xxx', 'yyy', 'zzz'];
+const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
 
 describe('GraphQL Queries', () => {
     let headers: Headers;
@@ -254,6 +252,55 @@ describe('GraphQL Queries', () => {
 
             expect(errors).toBeDefined();
             expect(errors[0]?.message).toMatch(/No AppProfiles found/iu);
+        },
+    );
+
+    test.concurrent.each(timezones)(
+        'AppProfiles mit Timezone %s suchen',
+        async (timezoneExpected) => {
+            // given
+            const query: GraphQLQuery = {
+                query: `
+                {
+                    appProfiles(input: { timezone: "${timezoneExpected}" }) {
+                        displayName
+                        timezone
+                    }
+                }
+            `,
+            };
+
+            // when
+            const response = await fetch(graphqlURL, {
+                method: POST,
+                body: JSON.stringify(query),
+                headers,
+            });
+
+            // then
+            const { status } = response;
+
+            expect(status).toBe(200);
+            expect(response.headers.get(CONTENT_TYPE)).toMatch(
+                /application\/graphql-response\+json/iu,
+            );
+
+            const { data, errors } =
+                (await response.json()) as AppProfilesSuccessType;
+
+            expect(errors).toBeUndefined();
+            expect(data).toBeDefined();
+
+            const { appProfiles } = data;
+
+            expect(appProfiles).not.toHaveLength(0);
+
+            appProfiles.forEach((appProfile: AppProfileDTO) => {
+                const { timezone, displayName } = appProfile;
+
+                expect(timezone).toBe(timezoneExpected);
+                expect(displayName).toBeDefined();
+            });
         },
     );
 });
