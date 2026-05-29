@@ -17,6 +17,7 @@ import { getToken } from './token.mts';
 // T e s t d a t e n
 // -----------------------------------------------------------------------------
 const idVorhanden = '550e8400-e29b-41d4-a716-446655440002';
+const idNichtVorhanden = '550e8400-e29b-41d4-a716-446655449999';
 
 const uuidRegexp =
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -305,5 +306,68 @@ describe('GraphQL Mutations', () => {
         const paths = messageArray.map((msg) => msg.path[0]);
 
         expect(paths).toStrictEqual(expect.arrayContaining(expectedPaths));
+    });
+
+    // -------------------------------------------------------------------------
+    test('Nicht-vorhandenes AppProfile aktualisieren', async () => {
+        // given
+        const mutation: GraphQLQuery = {
+            query: `
+                mutation {
+                    update(
+                        input: {
+                            id: "${idNichtVorhanden}",
+                            version: 0,
+                            displayName: "Update Mutation User",
+                            avatarUrl: "https://example.com/avatar/update-mutation.png",
+                            statusMessage: "Updated by GraphQL mutation test",
+                            timezone: "Europe/Berlin",
+                            currentStreak: 7,
+                            onboardingCompleted: true
+                        }
+                    ) {
+                        version
+                    }
+                }
+            `,
+        };
+        const headers = new Headers();
+        headers.append(CONTENT_TYPE, APPLICATION_JSON);
+        headers.append(ACCEPT, GRAPHQL_RESPONSE_JSON);
+        headers.append(AUTHORIZATION, `${BEARER} ${token}`);
+
+        // when
+        const response = await fetch(graphqlURL, {
+            method: POST,
+            body: JSON.stringify(mutation),
+            headers,
+        });
+
+        // then
+        const { status } = response;
+
+        expect(status).toBe(200);
+        expect(response.headers.get(CONTENT_TYPE)).toMatch(
+            /application\/graphql-response\+json/iu,
+        );
+
+        const { data, errors } = (await response.json()) as UpdateErrorsType;
+
+        expect(data?.update).toBeNull();
+        expect(errors).toHaveLength(1);
+
+        const [error] = errors;
+
+        expect(error).toBeDefined();
+
+        const { message, path, extensions } = error!;
+
+        expect(message).toBe(
+            `Es gibt kein AppProfile mit der ID ${idNichtVorhanden}.`,
+        );
+        expect(path).toBeDefined();
+        expect(path![0]).toBe('update');
+        expect(extensions).toBeDefined();
+        expect(extensions!.code).toBe('BAD_USER_INPUT');
     });
 });
