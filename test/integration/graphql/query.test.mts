@@ -57,6 +57,7 @@ const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
 const timezonesNichtVorhanden = ['America/New_York', 'Australia/Sydney'];
 const currentStreakMin = [3, 5];
 const currentStreakMinNichtVorhanden = [100, 200];
+const onboardingCompletedValues = [true, false];
 
 describe('GraphQL Queries', () => {
     let headers: Headers;
@@ -436,6 +437,58 @@ describe('GraphQL Queries', () => {
 
             expect(errors).toBeDefined();
             expect(errors[0]?.message).toMatch(/No AppProfiles found/iu);
+        },
+    );
+
+    test.concurrent.each(onboardingCompletedValues)(
+        'AppProfiles mit onBoardingCompleted=%s suchen',
+        async (onBoardingCompleted) => {
+            // given
+            const query: GraphQLQuery = {
+                query: `
+                {
+                    appProfiles(input: { onBoardingCompleted: ${onBoardingCompleted} }) {
+                        displayName
+                        onboardingCompleted
+                    }
+                }
+            `,
+            };
+
+            // when
+            const response = await fetch(graphqlURL, {
+                method: POST,
+                body: JSON.stringify(query),
+                headers,
+            });
+
+            // then
+            const { status } = response;
+
+            expect(status).toBe(200);
+            expect(response.headers.get(CONTENT_TYPE)).toMatch(
+                /application\/graphql-response\+json/iu,
+            );
+
+            const { data, errors } =
+                (await response.json()) as AppProfilesSuccessType;
+
+            expect(errors).toBeUndefined();
+            expect(data).toBeDefined();
+
+            const { appProfiles } = data;
+
+            expect(appProfiles).not.toHaveLength(0);
+
+            appProfiles.forEach((appProfile: AppProfileDTO) => {
+                const {
+                    onboardingCompleted: onboardingCompletedFound,
+                    displayName,
+                } = appProfile;
+
+                expect(onboardingCompletedFound).toBe(onBoardingCompleted);
+                expect(displayName).toBeDefined();
+            });
         },
     );
 });
