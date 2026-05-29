@@ -55,6 +55,7 @@ const displayNames = ['max', 'tech', 'dev'];
 const displayNamesNichtVorhanden = ['xxx', 'yyy', 'zzz'];
 const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
 const timezonesNichtVorhanden = ['America/New_York', 'Australia/Sydney'];
+const currentStreakMin = [3, 5];
 
 describe('GraphQL Queries', () => {
     let headers: Headers;
@@ -342,6 +343,58 @@ describe('GraphQL Queries', () => {
 
             expect(errors).toBeDefined();
             expect(errors[0]?.message).toMatch(/No AppProfiles found/iu);
+        },
+    );
+
+    test.concurrent.each(currentStreakMin)(
+        'AppProfiles mit Mindest-CurrentStreak %i suchen',
+        async (currentStreak) => {
+            // given
+            const query: GraphQLQuery = {
+                query: `
+                {
+                    appProfiles(input: { currentStreak: ${currentStreak} }) {
+                        displayName
+                        currentStreak
+                    }
+                }
+            `,
+            };
+
+            // when
+            const response = await fetch(graphqlURL, {
+                method: POST,
+                body: JSON.stringify(query),
+                headers,
+            });
+
+            // then
+            const { status } = response;
+
+            expect(status).toBe(200);
+            expect(response.headers.get(CONTENT_TYPE)).toMatch(
+                /application\/graphql-response\+json/iu,
+            );
+
+            const { data, errors } =
+                (await response.json()) as AppProfilesSuccessType;
+
+            expect(errors).toBeUndefined();
+            expect(data).toBeDefined();
+
+            const { appProfiles } = data;
+
+            expect(appProfiles).not.toHaveLength(0);
+
+            appProfiles.forEach((appProfile: AppProfileDTO) => {
+                const { currentStreak: currentStreakFound, displayName } =
+                    appProfile;
+
+                expect(currentStreakFound).toBeGreaterThanOrEqual(
+                    currentStreak,
+                );
+                expect(displayName).toBeDefined();
+            });
         },
     );
 });
