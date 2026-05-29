@@ -37,6 +37,48 @@ type UpdateErrorsType = {
     errors: ErrorsType;
 };
 
+type DeleteSuccessType = {
+    data: { delete: { success: boolean } };
+    errors?: undefined;
+};
+type DeleteErrorsType = {
+    data: { delete: null } | null;
+    errors: ErrorsType;
+};
+
+const createAppProfile = async (token: string) => {
+    const mutation: GraphQLQuery = {
+        query: `
+            mutation {
+                create(
+                    input: {
+                        displayName: "Delete Mutation User",
+                        avatarUrl: "https://example.com/avatar/delete-mutation.png",
+                        statusMessage: "Created for delete mutation test",
+                        timezone: "Europe/Berlin",
+                        currentStreak: 0,
+                        onboardingCompleted: true
+                    }
+                ) {
+                    id
+                }
+            }
+        `,
+    };
+    const headers = new Headers();
+    headers.append(CONTENT_TYPE, APPLICATION_JSON);
+    headers.append(ACCEPT, GRAPHQL_RESPONSE_JSON);
+    headers.append(AUTHORIZATION, `${BEARER} ${token}`);
+
+    const response = await fetch(graphqlURL, {
+        method: POST,
+        body: JSON.stringify(mutation),
+        headers,
+    });
+    const { data } = (await response.json()) as CreateSuccessType;
+    return data.create.id;
+};
+
 // -----------------------------------------------------------------------------
 // T e s t s
 // -----------------------------------------------------------------------------
@@ -369,5 +411,91 @@ describe('GraphQL Mutations', () => {
         expect(path![0]).toBe('update');
         expect(extensions).toBeDefined();
         expect(extensions!.code).toBe('BAD_USER_INPUT');
+    });
+
+    // -------------------------------------------------------------------------
+    test('AppProfile loeschen', async () => {
+        // given
+        const idLoeschen = await createAppProfile(token);
+        const mutation: GraphQLQuery = {
+            query: `
+                mutation {
+                    delete(id: "${idLoeschen}") {
+                        success
+                    }
+                }
+            `,
+        };
+        const headers = new Headers();
+        headers.append(CONTENT_TYPE, APPLICATION_JSON);
+        headers.append(ACCEPT, GRAPHQL_RESPONSE_JSON);
+        headers.append(AUTHORIZATION, `${BEARER} ${token}`);
+
+        // when
+        const response = await fetch(graphqlURL, {
+            method: POST,
+            body: JSON.stringify(mutation),
+            headers,
+        });
+
+        // then
+        const { status } = response;
+
+        expect(status).toBe(200);
+        expect(response.headers.get(CONTENT_TYPE)).toMatch(
+            /application\/graphql-response\+json/iu,
+        );
+
+        const { data, errors } = (await response.json()) as DeleteSuccessType;
+
+        expect(errors).toBeUndefined();
+        // Der Wert der Mutation ist true (falls geloescht wurde) oder false
+        expect(data.delete.success).toBe(true);
+    });
+
+    // -------------------------------------------------------------------------
+    test('AppProfile loeschen als "user"', async () => {
+        // given
+        const idLoeschen = await createAppProfile(token);
+        const mutation: GraphQLQuery = {
+            query: `
+                mutation {
+                    delete(id: "${idLoeschen}") {
+                        success
+                    }
+                }
+            `,
+        };
+        const headers = new Headers();
+        headers.append(CONTENT_TYPE, APPLICATION_JSON);
+        headers.append(ACCEPT, GRAPHQL_RESPONSE_JSON);
+        headers.append(AUTHORIZATION, `${BEARER} ${tokenUser}`);
+
+        // when
+        const response = await fetch(graphqlURL, {
+            method: POST,
+            body: JSON.stringify(mutation),
+            headers,
+        });
+
+        // then
+        const { status } = response;
+
+        expect(status).toBe(200);
+        expect(response.headers.get(CONTENT_TYPE)).toMatch(
+            /application\/graphql-response\+json/iu,
+        );
+
+        const { data, errors } = (await response.json()) as DeleteErrorsType;
+
+        expect(data?.delete).toBeNull();
+
+        const [error] = errors;
+
+        expect(error).toBeDefined();
+
+        const { extensions } = error!;
+
+        expect(extensions.code).toBe('FORBIDDEN');
     });
 });
