@@ -18,56 +18,57 @@ import http from 'k6/http';
 import { expect } from 'https://jslib.k6.io/k6-testing/0.6.1/index.js';
 import { sleep } from 'k6';
 import { type Options } from 'k6/options';
-import { BuchNeuType } from '../../src/buch/router/buch-validation.mts';
-import { generateISBN } from './isbn_generate.ts';
 
 const baseUrl = 'https://localhost:3000';
-const restUrl = `${baseUrl}/rest`;
+const restUrl = `${baseUrl}/rest/appprofile`;
 const graphqlUrl = `${baseUrl}/graphql`;
 const tokenUrl = `${baseUrl}/auth/token`;
 const dbPopulateUrl = `${baseUrl}/dev/db_populate`;
 
-const ids = [1, 20, 30, 40, 50, 60, 70, 80, 90];
-const titelArray = ['a', 'l', 't', 'i', 'v'];
-const titelNichtVorhanden = ['qqq', 'xxx', 'yyy', 'zzz'];
-const isbns = [
-    '978-3-897-22583-1',
-    '978-3-827-31552-6',
-    '978-0-201-63361-0',
-    '978-0-007-09732-6',
-    '978-3-824-40481-0',
-    '978-3-540-43081-0',
+// AppProfile IDs aus der CSV-Datei (Mockdaten)
+const profileIds = [
+    '550e8400-e29b-41d4-a716-446655440001',
+    '550e8400-e29b-41d4-a716-446655440002',
+    '550e8400-e29b-41d4-a716-446655440003',
+    '550e8400-e29b-41d4-a716-446655440004',
+    '550e8400-e29b-41d4-a716-446655440005',
 ];
-const schlagwoerter = ['javascript', 'typescript', 'java', 'python'];
-const neuesBuch: Omit<BuchNeuType, 'datum'> & {
-    datum: string;
-} = {
-    isbn: 'TBD',
-    rating: 1,
-    art: 'HARDCOVER',
-    preis: 111.11,
-    rabatt: 0.011,
-    lieferbar: true,
-    datum: '2025-02-28T00:00:00Z',
-    homepage: 'https://post.rest',
-    schlagwoerter: [],
-    titel: {
-        titel: 'Titelk6',
-        untertitel: 'untertitelk6',
+
+// Suchparameter für AppProfiles (aus CSV-Daten)
+const displayNames = [
+    'Max Power',
+    'Lina Tech',
+    'Digital Nomad',
+    'Karlsruhe Dev',
+    'Focus Queen',
+];
+const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
+const displayNamesNotFound = [
+    'Nicht Vorhanden 1',
+    'Nicht Vorhanden 2',
+    'Nicht Vorhanden 3',
+];
+
+// Template für ein neues AppProfile
+const newAppProfile = {
+    displayName: 'k6-Loadtest-Profile',
+    avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=k6',
+    statusMessage: 'Lastest mit k6',
+    timezone: 'Europe/Berlin',
+    currentStreak: 0,
+    onboardingCompleted: true,
+    trackingConfig: {
+        dailyLimitMinutes: 120,
+        isPublic: true,
+        notificationsEnabled: true,
     },
-    abbildungen: [
-        {
-            beschriftung: 'Abb. 1: k6',
-            contentType: 'img/png',
-        },
-    ],
 };
 
 const tlsDir = '../../src/config/resources/tls';
 const cert = open(`${tlsDir}/certificate.crt`);
 const key = open(`${tlsDir}/key.pem`);
 
-// https://grafana.com/docs/k6/latest/using-k6/test-lifecycle
+// https://grafana.com/docs/k6/latest/test-lifecycle
 export function setup() {
     const tokenHeaders: Record<string, string> = {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -107,53 +108,39 @@ export const options: Options = {
     // httpDebug: 'headers',
 
     scenarios: {
-        get_id: {
-            exec: 'getById',
-            executor: 'ramping-vus', // "Ramp up" zu Beginn und "Ramp down" am Ende des Testintervalls
+        // GET /rest/appprofile/<id> - einzelnes Profil laden
+        get_profile_by_id: {
+            exec: 'getProfileById',
+            executor: 'ramping-vus',
             stages: [
-                { target: 2, duration: rampUpDuration }, // "traffic ramp-up": schrittweise von 0 auf 2 User in 5 Sek
-                { target: 2, duration: steadyDuration }, // 2 User fuer den eigentlichen Lasttest
-                { target: 0, duration: rampDownDuration }, // "ramp-down": schrittweise auf 0 User
+                { target: 3, duration: rampUpDuration },
+                { target: 3, duration: steadyDuration },
+                { target: 0, duration: rampDownDuration },
             ],
         },
-        get_id_not_modified: {
-            exec: 'getByIdNotModified',
-            executor: 'ramping-vus', // "Ramp up" zu Beginn und "Ramp down" am Ende des Testintervalls
+        // GET /rest/appprofile/<id> mit If-None-Match (304 Not Modified)
+        get_profile_not_modified: {
+            exec: 'getProfileByIdNotModified',
+            executor: 'ramping-vus',
             stages: [
                 { target: 5, duration: rampUpDuration },
                 { target: 5, duration: steadyDuration },
                 { target: 0, duration: rampDownDuration },
             ],
         },
-        get_titel: {
-            exec: 'getByTitel',
+        // GET /rest/appprofile?displayName=<value>
+        get_by_display_name: {
+            exec: 'getByDisplayName',
             executor: 'ramping-vus',
             stages: [
-                { target: 20, duration: rampUpDuration },
-                { target: 20, duration: '22s' },
+                { target: 4, duration: rampUpDuration },
+                { target: 4, duration: '22s' },
                 { target: 0, duration: rampDownDuration },
             ],
         },
-        get_isbn: {
-            exec: 'getByISBN',
-            executor: 'ramping-vus',
-            stages: [
-                { target: 10, duration: rampUpDuration },
-                { target: 10, duration: '22s' },
-                { target: 0, duration: rampDownDuration },
-            ],
-        },
-        get_schlagwort: {
-            exec: 'getBySchlagwort',
-            executor: 'ramping-vus',
-            stages: [
-                { target: 15, duration: rampUpDuration },
-                { target: 15, duration: '22s' },
-                { target: 0, duration: rampDownDuration },
-            ],
-        },
-        post_buch: {
-            exec: 'postBuch',
+        // GET /rest/appprofile?timezone=<value>
+        get_by_timezone: {
+            exec: 'getByTimezone',
             executor: 'ramping-vus',
             stages: [
                 { target: 3, duration: rampUpDuration },
@@ -161,17 +148,9 @@ export const options: Options = {
                 { target: 0, duration: rampDownDuration },
             ],
         },
-        query_buch: {
-            exec: 'queryBuch',
-            executor: 'ramping-vus',
-            stages: [
-                { target: 3, duration: rampUpDuration },
-                { target: 3, duration: '22s' },
-                { target: 0, duration: rampDownDuration },
-            ],
-        },
-        query_buecher: {
-            exec: 'queryBuecher',
+        // GET /rest/appprofile mit Paginierung
+        get_all_paginated: {
+            exec: 'getAllPaginated',
             executor: 'ramping-vus',
             stages: [
                 { target: 5, duration: rampUpDuration },
@@ -179,8 +158,9 @@ export const options: Options = {
                 { target: 0, duration: rampDownDuration },
             ],
         },
-        query_buecher_nicht_vorhanden: {
-            exec: 'queryBuecherNichtVorhanden',
+        // POST /rest/appprofile - neues Profil erstellen
+        post_profile: {
+            exec: 'postProfile',
             executor: 'ramping-vus',
             stages: [
                 { target: 2, duration: rampUpDuration },
@@ -188,15 +168,33 @@ export const options: Options = {
                 { target: 0, duration: rampDownDuration },
             ],
         },
-
-        // Scenarios mit 404 NOT_FOUND -> http_req_failed
-        // https://community.grafana.com/t/http-req-failed-reporting-passes-as-failures/94807/3
-        get_titel_nicht_vorhanden: {
-            exec: 'getByTitelNichtVorhanden',
+        // GraphQL query "appProfile"
+        query_app_profile: {
+            exec: 'queryAppProfile',
             executor: 'ramping-vus',
             stages: [
                 { target: 3, duration: rampUpDuration },
                 { target: 3, duration: '22s' },
+                { target: 0, duration: rampDownDuration },
+            ],
+        },
+        // GraphQL query "appProfiles"
+        query_app_profiles: {
+            exec: 'queryAppProfiles',
+            executor: 'ramping-vus',
+            stages: [
+                { target: 4, duration: rampUpDuration },
+                { target: 4, duration: '22s' },
+                { target: 0, duration: rampDownDuration },
+            ],
+        },
+        // GET /rest/appprofile?displayName=<nicht_vorhanden> -> 404
+        get_display_name_not_found: {
+            exec: 'getByDisplayNameNotFound',
+            executor: 'ramping-vus',
+            stages: [
+                { target: 2, duration: rampUpDuration },
+                { target: 2, duration: '22s' },
                 { target: 0, duration: rampDownDuration },
             ],
         },
@@ -213,28 +211,24 @@ export const options: Options = {
     insecureSkipTLSVerify: true,
 };
 
-// HTTP-Requests mit Ueberpruefungen
+// ============================================================================
+// HTTP-Requests mit Überprüfungen
+// ============================================================================
 
-// GET /rest/<id>
-export function getById() {
-    // https://stackoverflow.com/questions/4550505/getting-a-random-value-from-a-javascript-array
-    // alternativ: https://jslib.k6.io und https://grafana.com/docs/k6/latest/javascript-api/jslib/utils
-    const id = ids[Math.floor(Math.random() * ids.length)]; // zwischen 0 und 1
+// GET /rest/appprofile/<id>
+export function getProfileById() {
+    const id = profileIds[Math.floor(Math.random() * profileIds.length)];
     const response = http.get(`${restUrl}/${id}`);
 
     const { status, headers } = response;
-    // expect ab k6 1.2.0
-    // https://github.com/grafana/k6/releases/tag/v1.2.0
-    // https://github.com/grafana/k6/issues/4067
     expect(status).toBe(200);
     expect(headers['Content-Type']).toContain('application/json');
     sleep(1); // Denkzeit simulieren
 }
 
-// GET /rest/<id> mit If-None-Match
-export function getByIdNotModified() {
-    // https://stackoverflow.com/questions/4550505/getting-a-random-value-from-a-javascript-array
-    const id = ids[Math.floor(Math.random() * ids.length)]; // zwischen 0 und 1
+// GET /rest/appprofile/<id> mit If-None-Match
+export function getProfileByIdNotModified() {
+    const id = profileIds[Math.floor(Math.random() * profileIds.length)];
     const headers: Record<string, string> = {
         'If-None-Match': '"0"',
     };
@@ -244,10 +238,11 @@ export function getByIdNotModified() {
     sleep(1);
 }
 
-// GET /rest?title=<value>
-export function getByTitel() {
-    const titel = titelArray[Math.floor(Math.random() * titelArray.length)];
-    const response = http.get(`${restUrl}?titel=${titel}`);
+// GET /rest/appprofile?displayName=<value>
+export function getByDisplayName() {
+    const displayName =
+        displayNames[Math.floor(Math.random() * displayNames.length)];
+    const response = http.get(`${restUrl}?displayName=${displayName}`);
 
     const { status, headers } = response;
     expect(status).toBe(200);
@@ -255,25 +250,22 @@ export function getByTitel() {
     sleep(1);
 }
 
-// 404 GET /rest?title=<value>
-// Statuscodes mit 4xx und 5xx fuehren zu http_req_failed
-// https://grafana.com/docs/k6/latest/using-k6/metrics/create-custom-metrics
-// https://grafana.com/docs/k6/latest/javascript-api/k6-metrics/counter
-export function getByTitelNichtVorhanden() {
-    const titel =
-        titelNichtVorhanden[
-            Math.floor(Math.random() * titelNichtVorhanden.length)
+// 404 GET /rest/appprofile?displayName=<nicht_vorhanden>
+export function getByDisplayNameNotFound() {
+    const displayName =
+        displayNamesNotFound[
+            Math.floor(Math.random() * displayNamesNotFound.length)
         ];
-    const response = http.get(`${restUrl}?titel=${titel}`);
+    const response = http.get(`${restUrl}?displayName=${displayName}`);
 
     expect(response.status).toBe(404);
     sleep(1);
 }
 
-// GET /rest?isbn=<value>
-export function getByISBN() {
-    const isbn = isbns[Math.floor(Math.random() * isbns.length)];
-    const response = http.get(`${restUrl}?isbn=${isbn}`);
+// GET /rest/appprofile?timezone=<value>
+export function getByTimezone() {
+    const timezone = timezones[Math.floor(Math.random() * timezones.length)];
+    const response = http.get(`${restUrl}?timezone=${timezone}`);
 
     const { status, headers } = response;
     expect(status).toBe(200);
@@ -281,11 +273,10 @@ export function getByISBN() {
     sleep(1);
 }
 
-// GET /rest?<schlagwort>=true
-export function getBySchlagwort() {
-    const schlagwort =
-        schlagwoerter[Math.floor(Math.random() * schlagwoerter.length)];
-    const response = http.get(`${restUrl}?${schlagwort}=true`);
+// GET /rest/appprofile?page=0&size=2
+export function getAllPaginated() {
+    const page = Math.floor(Math.random() * 3); // Seite 0-2
+    const response = http.get(`${restUrl}?page=${page}&size=2`);
 
     const { status, headers } = response;
     expect(status).toBe(200);
@@ -293,13 +284,11 @@ export function getBySchlagwort() {
     sleep(1);
 }
 
-// POST /rest
-export function postBuch() {
-    const schlagwort =
-        schlagwoerter[Math.floor(Math.random() * schlagwoerter.length)];
-    const buch = { ...neuesBuch };
-    buch['isbn'] = generateISBN();
-    buch['schlagwoerter'] = [schlagwort?.toUpperCase() ?? 'N/A'];
+// POST /rest/appprofile
+export function postProfile() {
+    const profile = { ...newAppProfile };
+    // Eindeutigen Namen für jedes Profil generieren
+    profile.displayName = `k6-Profile-${Math.random().toString(36).substr(2, 9)}`;
 
     const tokenHeaders: Record<string, string> = {
         'Content-Type': 'application/x-www-form-urlencoded',
@@ -315,7 +304,7 @@ export function postBuch() {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
     };
-    const response = http.post(restUrl, JSON.stringify(buch), {
+    const response = http.post(restUrl, JSON.stringify(profile), {
         headers: requestHeaders,
     });
 
@@ -325,55 +314,29 @@ export function postBuch() {
     sleep(1);
 }
 
-// POST /graphql query "buch"
-export function queryBuch() {
-    const id = ids[Math.floor(Math.random() * ids.length)];
+// POST /graphql query "appProfile"
+export function queryAppProfile() {
+    const id = profileIds[Math.floor(Math.random() * profileIds.length)];
     const body = {
         query: `
             {
-                buch(id: "${id}") {
+                appProfile(id: "${id}") {
+                    id
                     version
-                    isbn
-                    rating
-                    art
-                    preis
-                    lieferbar
-                    datum
-                    homepage
-                    schlagwoerter
-                    titel {
-                        titel
+                    displayName
+                    statusMessage
+                    timezone
+                    currentStreak
+                    onboardingCompleted
+                    trackingConfig {
+                        dailyLimitMinutes
+                        isPublic
+                        notificationsEnabled
                     }
-                    rabatt(short: true)
-                }
-            }
-        `,
-    };
-    const requestHeaders = { 'Content-Type': 'application/json' };
-
-    const response = http.post(graphqlUrl, JSON.stringify(body), {
-        headers: requestHeaders,
-    });
-
-    const { status, headers } = response;
-    expect(status).toBe(200);
-    expect(headers['Content-Type']).toContain('application/json');
-    sleep(1);
-}
-
-// POST /graphql query "buecher"
-export function queryBuecher() {
-    const titel = titelArray[Math.floor(Math.random() * titelArray.length)];
-    const body = {
-        query: `
-            {
-                buecher(suchparameter: {
-                    titel: "${titel}"
-                }) {
-                    art
-                    schlagwoerter
-                    titel {
-                        titel
+                    screentimeLogs {
+                        logDate
+                        totalMinutes
+                        topApp
                     }
                 }
             }
@@ -391,23 +354,36 @@ export function queryBuecher() {
     sleep(1);
 }
 
-// POST /graphql query "buecher" nicht gefunden
-export function queryBuecherNichtVorhanden() {
+// POST /graphql query "appProfiles"
+export function queryAppProfiles() {
+    const displayName =
+        displayNames[Math.floor(Math.random() * displayNames.length)];
     const body = {
         query: `
             {
-                buecher(suchparameter: {
-                    titel: "NICHT_VORHANDEN"
+                appProfiles(input: {
+                    displayName: "${displayName}"
                 }) {
-                    schlagwoerter
+                    id
+                    displayName
+                    timezone
+                    currentStreak
+                    trackingConfig {
+                        dailyLimitMinutes
+                        isPublic
+                    }
                 }
             }
         `,
     };
-    const headers = { 'Content-Type': 'application/json' };
+    const requestHeaders = { 'Content-Type': 'application/json' };
 
-    const response = http.post(graphqlUrl, JSON.stringify(body), { headers });
+    const response = http.post(graphqlUrl, JSON.stringify(body), {
+        headers: requestHeaders,
+    });
 
-    expect(response.status).toBe(200);
+    const { status, headers } = response;
+    expect(status).toBe(200);
+    expect(headers['Content-Type']).toContain('application/json');
     sleep(1);
 }
