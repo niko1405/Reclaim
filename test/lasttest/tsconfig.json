@@ -2,8 +2,7 @@
   "extends": "../../tsconfig.json",
   "include": [
     "script.ts",
-    "isbn_generate.ts",
-    "../../src/buch/router/buch-validation.mts"
+    "../../src/reclaim/router/app-profile-validation.mts"
   ],
   "compilerOptions": {
     // https://www.typescriptlang.org/tsconfig/#isolatedModules
