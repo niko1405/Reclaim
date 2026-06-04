@@ -16,16 +16,16 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <https://www.gnu.org/licenses/>.
 
-# Aufruf:   docker build --tag juergenzimmermann/buch:2026.4.1-hardened .
+# Aufruf:   docker build --tag juergenzimmermann/reclaim:2026.4.1-hardened .
 #               ggf. --progress=plain
 #               ggf. --no-cache
 #
 #           Windows:   Get-Content Dockerfile | docker run --rm --interactive hadolint/hadolint:v2.14.0-debian
 #           macOS:     cat Dockerfile | docker run --rm --interactive hadolint/hadolint:v2.14.0-debian
 #
-#           docker debug juergenzimmermann/buch:2026.4.1-hardened
+#           docker debug juergenzimmermann/reclaim:2026.4.1-hardened
 #           docker network ls
-#           docker save juergenzimmermann/buch:2026.4.1-hardened > buch.tar
+#           docker save juergenzimmermann/reclaim:2026.4.1-hardened > reclaim.tar
 
 # https://docs.docker.com/engine/reference/builder/#syntax
 # https://github.com/moby/buildkit/blob/master/frontend/dockerfile/docs/reference.md
@@ -58,8 +58,8 @@ COPY --chown=nonroot:nonroot src ./src
 # https://specs.opencontainers.org/image-spec/annotations
 # https://spdx.org/licenses
 # MAINTAINER ist deprecated https://docs.docker.com/engine/reference/builder/#maintainer-deprecated
-LABEL org.opencontainers.image.title="buch" \
-  org.opencontainers.image.description="Appserver buch mit 'hardened' Basis-Image Bun und Debian 13" \
+LABEL org.opencontainers.image.title="reclaim" \
+  org.opencontainers.image.description="Appserver reclaim mit 'hardened' Basis-Image Bun und Debian 13" \
   org.opencontainers.image.version="2026.4.1-trixie" \
   org.opencontainers.image.licenses="GPL-3.0-or-later" \
   org.opencontainers.image.authors="Juergen.Zimmermann@h-ka.de"
