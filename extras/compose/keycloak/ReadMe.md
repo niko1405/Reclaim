@@ -76,12 +76,12 @@ _Keycloak_ wird als Docker Container gestartet werden, wobei die Daten sowie das
 Zertifikat und der private Schlüssel in einem _Named Volume_ abgespeichert
 werden. Das selbst-signierte Zertifikat ist in der Datei `extras\compose\keycloak\certificate.crt`
 und der private Schlüssel in `extras\compose\keycloak\key.pem` bereitgestellt.
-Zunächst wird das Named Volume `kc_data` für die künftigen Daten und das Named
-Volume `kc_tls` für das Zertifikat und den privaten Schlüssel angelegt:
+Zunächst wird das Named Volume `kc_data_reclaim` für die künftigen Daten und das Named
+Volume `kc_tls_reclaim` für das Zertifikat und den privaten Schlüssel angelegt:
 
 ```shell
-    docker volume create kc_data
-    docker volume create kc_tls
+    docker volume create kc_data_reclaim
+    docker volume create kc_tls_reclaim
 ```
 
 Für Details zu Volumes siehe https://docs.docker.com/engine/storage/volumes.
@@ -96,12 +96,12 @@ sowie die Berechtigung zum Ändern vom Linux-Owner und von der Linux-Group (s.u.
 ```shell
     # Windows
     cd extras\compose\keycloak
-    docker run -v kc_tls:/opt/keycloak/tls -v ./tls:/tmp/tls:ro `
+    docker run -v kc_tls_reclaim:/opt/keycloak/tls -v ./tls:/tmp/tls:ro `
       --rm -it -u 0:0 --entrypoint '' dhi.io/keycloak:26.6.1-debian13 /bin/bash
 
     # macOS/Linux
     cd extras/compose/keycloak
-    docker run -v kc_tls:/opt/keycloak/tls -v ./tls:/tmp/tls:ro \
+    docker run -v kc_tls_reclaim:/opt/keycloak/tls -v ./tls:/tmp/tls:ro \
       --rm -it -u 0:0 --entrypoint '' dhi.io/keycloak:26.6.1-debian13 /bin/bash
 
         cp /tmp/tls/certificate.crt /opt/keycloak/tls/kc_cert
@@ -112,11 +112,11 @@ sowie die Berechtigung zum Ändern vom Linux-Owner und von der Linux-Group (s.u.
         exit
 ```
 
-Um das Zertifikat und den privaten Schlüssel in das Named Volume `kc_tls` kopieren
+Um das Zertifikat und den privaten Schlüssel in das Named Volume `kc_tls_reclaim` kopieren
 zu können, wurde das lokale Verzeichnis `.\tls` in `/tmp/tls` bereitgestellt.
 In der _bash_ werden deshalb das Zertifikat und der private Schlüssel aus dem
 Verzeichnis `/tmp/tls` nach `/opt/keycloak/tls` und deshalb in das Named Volume
-`kc_tls` kopiert. Danach wird der Linux-Owner und die -Gruppe jeweils auf `nonroot`
+`kc_tls_reclaim` kopiert. Danach wird der Linux-Owner und die -Gruppe jeweils auf `nonroot`
 gesetzt.
 
 Jetzt kann der Container für _Keycloak_ gestartet werden:
