@@ -217,8 +217,13 @@ describe('GraphQL Mutations', () => {
 
         expect(error).toBeDefined();
 
-        const { message } = error!;
-        const messageArray: any[] = JSON.parse(message);
+        const message = error?.message;
+
+        expect(message).toBeDefined();
+
+        // Lösung: Wenn message undefined ist, übergeben wir einen validen JSON-String '[]',
+        // damit parse() nicht abstürzt. Das nachfolgende expect fängt das dann logisch ab.
+        const messageArray: any[] = JSON.parse(message ?? '[]');
 
         expect(messageArray).toBeDefined();
         expect(messageArray.length).toBeGreaterThanOrEqual(
@@ -339,8 +344,13 @@ describe('GraphQL Mutations', () => {
         expect(errors).toHaveLength(1);
 
         const [error] = errors;
-        const { message } = error!;
-        const messageArray: any[] = JSON.parse(message);
+
+        // Fix: Nutzung von optionaler Verkettung statt Non-Null-Assertion
+        const message = error?.message;
+
+        expect(message).toBeDefined();
+
+        const messageArray: any[] = JSON.parse(message ?? '[]');
 
         expect(messageArray).toBeDefined();
         expect(messageArray).toHaveLength(expectedPaths.length);
@@ -402,15 +412,16 @@ describe('GraphQL Mutations', () => {
 
         expect(error).toBeDefined();
 
-        const { message, path, extensions } = error!;
+        // Fix: Destrukturierung mit Standardwerten absichern, falls error doch undefined ist
+        const { message, path, extensions } = error ?? {};
 
         expect(message).toBe(
             `Es gibt kein AppProfile mit der ID ${idNichtVorhanden}.`,
         );
         expect(path).toBeDefined();
-        expect(path![0]).toBe('update');
+        expect(path?.[0]).toBe('update');
         expect(extensions).toBeDefined();
-        expect(extensions!.code).toBe('BAD_USER_INPUT');
+        expect(extensions?.code).toBe('BAD_USER_INPUT');
     });
 
     // -------------------------------------------------------------------------
@@ -494,8 +505,9 @@ describe('GraphQL Mutations', () => {
 
         expect(error).toBeDefined();
 
-        const { extensions } = error!;
+        // Fix: Optional Chaining nutzen
+        const extensions = error?.extensions;
 
-        expect(extensions.code).toBe('FORBIDDEN');
+        expect(extensions?.code).toBe('FORBIDDEN');
     });
 });
