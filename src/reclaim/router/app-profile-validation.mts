@@ -57,6 +57,31 @@ const AppProfileComplete = z.strictObject({
         .optional(),
 });
 
+const TrackingConfigGraphQLPostSchema = AppProfileComplete.shape.trackingConfig
+    .unwrap()
+    .omit({
+        id: true,
+        profileId: true,
+        erzeugt: true,
+        aktualisiert: true,
+    });
+
+const ScreentimeLogGraphQLPostSchema = AppProfileComplete.shape.screentimeLogs
+    .unwrap()
+    .element.omit({
+        id: true,
+    });
+
+export const AppProfilePostGraphQLSchema = AppProfileComplete.omit({
+    id: true,
+    version: true,
+})
+    .extend({
+        trackingConfig: TrackingConfigGraphQLPostSchema.optional(),
+        screentimeLogs: z.array(ScreentimeLogGraphQLPostSchema).optional(),
+    })
+    .readonly();
+
 export const AppProfilePostSchema = AppProfileComplete.omit({
     id: true,
     version: true,
@@ -72,7 +97,13 @@ export const AppProfileUpdateSchema = AppProfileComplete.omit({
 export const AppProfileUpdateGraphQLSchema = AppProfileComplete.omit({
     trackingConfig: true,
     screentimeLogs: true,
-}).readonly();
+})
+    .partial()
+    .extend({
+        id: z.string().uuid(),
+        version: z.number().gte(0),
+    })
+    .readonly();
 
 export type AppProfilePostType = z.infer<typeof AppProfilePostSchema>;
 export type AppProfileUpdateType = z.infer<typeof AppProfileUpdateSchema>;

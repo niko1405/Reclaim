@@ -209,6 +209,3 @@ export const appProfilesHandler = async (
     logger.debug('appProfilesHandler: result=%o', result);
     return result;
 };
-
-export const buchHandler = appProfileHandler;
-export const buecherHandler = appProfilesHandler;
