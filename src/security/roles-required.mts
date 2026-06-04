@@ -49,7 +49,7 @@ const verifyToken = async (token: string) => {
         // iat, exp und nbf werden implizit verifiziert
         return await jwtVerify(token, jwks, {
             // siehe Properties innerhalb der Payload des Tokens
-            issuer,
+            issuer: [issuer, 'https://keycloak:8443/realms/javascript'],
             audience,
         });
     } catch (err) {

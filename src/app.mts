@@ -39,7 +39,7 @@ import {
 } from './problem-details.mts';
 import { graphqlApp } from './reclaim/graphql/graphql-app.mts';
 import { router } from './reclaim/router/app-profile-router.mts';
-import { router as buchWriteRouter } from './reclaim/router/app-profile-write-router.mts';
+import { router as profileWriteRouter } from './reclaim/router/app-profile-write-router.mts';
 import {
     IsbnExistsError,
     NotFoundError,
@@ -77,7 +77,7 @@ if (logger.isLevelEnabled('debug')) {
 // R o u t e n
 // -----------------------------------------------------------------------------
 app.route(paths.rest, router);
-app.route(paths.rest, buchWriteRouter);
+app.route(paths.rest, profileWriteRouter);
 app.route(paths.health, healthRouter);
 app.route(paths.auth, authRouter);
 // Yoga baut eine Hono-App mit Basispfad "/graphql"
@@ -102,7 +102,7 @@ if (logger.isLevelEnabled('debug')) {
 app.onError((error, c) => {
     if (error instanceof NotFoundError) {
         // https://hono.dev/docs/api/context#notfound
-        return c.notFound() as Response;
+        return c.notFound();
     }
 
     if (error.name === 'ZodError') {

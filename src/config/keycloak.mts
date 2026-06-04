@@ -57,15 +57,17 @@ const port = (keycloak?.port as number | undefined) ?? 8443;
 const authServerUrl = `${schema}://${host}:${port}`;
 // Keycloak ist in Sicherheits-Bereiche (= realms) unterteilt
 const realm = (keycloak?.realm as string | undefined) ?? 'javascript';
-const issuer = `${authServerUrl}/realms/${realm}`;
-const oidcUrl = `${issuer}/protocol/openid-connect`;
-const jwksUri = `${oidcUrl}/certs`;
+const issuerHost = (keycloak?.issuerHost as string | undefined) ?? 'localhost';
+const issuerPort = (keycloak?.issuerPort as number | undefined) ?? 8843;
+const issuerAuthServerUrl = `${schema}://${issuerHost}:${issuerPort}`;
+const issuer = `${issuerAuthServerUrl}/realms/${realm}`;
+const jwksUri = `${authServerUrl}/realms/${realm}/protocol/openid-connect/certs`;
 const clientId =
     (keycloak?.clientId as string | undefined) ?? 'javascript-client';
 const audience = ['account'];
 
 // fuer KeycloakService
-const accessTokenUrl = `${oidcUrl}/token`;
+const accessTokenUrl = `${authServerUrl}/realms/${realm}/protocol/openid-connect/token`;
 
 const { CLIENT_SECRET, NODE_ENV } = env;
 
