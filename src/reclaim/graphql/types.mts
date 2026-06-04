@@ -390,8 +390,6 @@ export type AppProfileUpdateInput = {
     onboardingCompleted?: boolean | undefined;
 };
 
-export type AppProfileUpdateInput = AppProfileUpdateInput;
-
 export const toUpdate = (
     appProfile: AppProfileUpdateInput,
 ): AppProfileUpdate => {
