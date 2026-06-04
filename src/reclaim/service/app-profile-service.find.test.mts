@@ -31,7 +31,7 @@ const { findManyMock, countMock } = vi.hoisted(() => ({
 // vi.mock() bewirkt Hoisting
 vi.mock('../../config/prisma-client.mts', () => ({
     prismaClient: {
-        buch: {
+        appProfile: {
             findMany: findManyMock,
             count: countMock,
         },
@@ -98,7 +98,7 @@ describe('AppProfileService find', () => {
 
         // when / then
         await expect(service.find(suchparameter, pageable)).rejects.toThrow(
-            /^Keine AppProfiles gefunden/,
+            /^No AppProfiles found/,
         );
     });
 });

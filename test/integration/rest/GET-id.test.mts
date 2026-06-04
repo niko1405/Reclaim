@@ -63,13 +63,13 @@ describe('GET /rest/:id', () => {
     });
 
     test.concurrent.each(idsETag)(
-        `AppProfile zu ID %i mit ${IF_NONE_MATCH}`,
+        `AppProfile zu ID %s mit ${IF_NONE_MATCH}`,
         async (id) => {
             // given
             const url = `${restURL}/${id}`;
             const headers = new Headers();
             headers.append('Accept', 'application/json');
-            headers.append(IF_NONE_MATCH, '"0"');
+            headers.append(IF_NONE_MATCH, '"1"');
 
             // when
             const response = await fetch(url, { headers });

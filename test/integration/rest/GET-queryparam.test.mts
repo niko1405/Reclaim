@@ -9,9 +9,9 @@ type AppProfileType = {
     currentStreak: number;
     onboardingCompleted: boolean;
 };
-const displayNames = ['max', 'tech', 'dev'];
+const displayNames = ['user', 'create', 'dev'];
 const displayNamesNichtVorhanden = ['xxx', 'yyy', 'zzz'];
-const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
+const timezones = ['Europe/Berlin'];
 const timezonesNichtVorhanden = ['America/New_York', 'Australia/Sydney'];
 const currentStreakMin = [3, 5];
 const currentStreakMinNichtVorhanden = [100, 200];
