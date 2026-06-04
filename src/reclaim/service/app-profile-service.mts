@@ -69,7 +69,7 @@ export class AppProfileService {
         readonly id: string;
         readonly withScreentimeLogs?: boolean;
     }): Promise<Readonly<AppProfileWithTrackingConfigAndScreentimeLogs>> {
-        this.#logger.debug('findById: id=%d', id);
+        this.#logger.debug('findById: id=%s', id);
 
         const include = withScreentimeLogs
             ? this.#includeTrackingConfigAndScreentimeLogs
@@ -80,7 +80,7 @@ export class AppProfileService {
                 include,
             });
         if (appProfile === null) {
-            this.#logger.debug('Es gibt kein AppProfile mit der ID %d', id);
+            this.#logger.debug('Es gibt kein AppProfile mit der ID %s', id);
             throw new NotFoundError(
                 `Es gibt kein AppProfile mit der ID ${id}.`,
             );
@@ -98,7 +98,7 @@ export class AppProfileService {
     async findAvatarByAppProfileId(
         appProfileId: string,
     ): Promise<Readonly<ProfileAvatar> | undefined> {
-        this.#logger.debug('findFileByBuchId: buchId=%d', appProfileId);
+        this.#logger.debug('findFileByBuchId: buchId=%s', appProfileId);
         const profileAvatar: ProfileAvatar | null =
             await prismaClient.profileAvatar.findUnique({
                 where: { profileId: appProfileId },
@@ -111,7 +111,7 @@ export class AppProfileService {
         }
 
         this.#logger.debug(
-            'findAvatarByAppProfileId: id=%s, byteLength=%d, filename=%s, mimetype=%s, profileId=%d',
+            'findAvatarByAppProfileId: id=%s, byteLength=%d, filename=%s, mimetype=%s, profileId=%s',
             profileAvatar.id,
             profileAvatar.fileData.byteLength,
             profileAvatar.filename,

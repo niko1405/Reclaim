@@ -34,6 +34,7 @@ import {
     type AppProfileUpdate,
     type ProfileAvatarCreated,
 } from '../service/app-profile-write-service.mts';
+import { NotFoundError } from '../service/errors.mts';
 import {
     AppProfilePostSchema,
     AppProfilePostType,
@@ -50,6 +51,9 @@ const { appProfileWriteService } = container;
 export const router = new Hono();
 
 const logger = getLogger('app-profile-write-router', 'file');
+
+const UUID_PATTERN =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 router.post('/', rolesRequired('admin', 'user'), async (c) => {
     const requestBody = await c.req.json();
@@ -123,6 +127,11 @@ router.put('/:id', rolesRequired('admin', 'user'), async (c) => {
         );
     }
 
+    if (!UUID_PATTERN.test(id)) {
+        logger.debug(`put: id "${id}" ist keine valide UUID`);
+        throw new NotFoundError(`Es gibt kein App-Profil mit der ID ${id}.`);
+    }
+
     const requestBody = await c.req.json();
 
     // Validierung mit Zod
@@ -160,6 +169,11 @@ const toToAppProfileUpdate = (
 router.delete('/:id', rolesRequired('admin'), async (c) => {
     const id = c.req.param('id') ?? '-1';
     logger.debug('delete: id=%s', id);
+
+    if (!UUID_PATTERN.test(id)) {
+        logger.debug(`delete: id "${id}" ist keine valide UUID`);
+        throw new NotFoundError(`Es gibt kein App-Profil mit der ID ${id}.`);
+    }
 
     await appProfileWriteService.delete(id);
     return c.body(null, 204);

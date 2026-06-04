@@ -18,7 +18,7 @@ import { randomUUID } from 'node:crypto';
 import { container } from '../../container.mts';
 import { getLogger } from '../../logger/logger.mts';
 import {
-    AppProfilePostSchema,
+    AppProfilePostGraphQLSchema,
     AppProfileUpdateGraphQLSchema,
 } from '../router/app-profile-validation.mts';
 import { NotFoundError } from '../service/errors.mts';
@@ -131,7 +131,7 @@ const { appProfileWriteService, keycloakService } = container;
 // Validierung mit Zod
 const validateAppProfilePost = (appProfile: AppProfilePostInput) => {
     try {
-        AppProfilePostSchema.parse(appProfile);
+        AppProfilePostGraphQLSchema.parse(appProfile);
     } catch (err) {
         if (err instanceof Error) {
             const { message } = err;

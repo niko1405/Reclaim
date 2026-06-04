@@ -50,11 +50,15 @@ Bun.serve({
 await banner();
 
 process.on('SIGINT', () => {
-    // IIFE  = Immediately Invoked Function Expression
-    // IIAFE = Immediately Invoked Asynchronous Function Expression
-    (async () => {
-        await disconnectDB();
-    })();
-
     console.log('Der Server wird heruntergefahren.');
+
+    (async () => {
+        try {
+            await disconnectDB();
+        } catch (err) {
+            console.error('Fehler beim Trennen der DB:', err);
+        } finally {
+            process.exit(0);
+        }
+    })();
 });
