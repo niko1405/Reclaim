@@ -20,7 +20,7 @@ import { sleep } from 'k6';
 import { type Options } from 'k6/options';
 
 const baseUrl = 'https://localhost:3000';
-const restUrl = `${baseUrl}/rest/appprofile`;
+const restUrl = `${baseUrl}/rest`;
 const graphqlUrl = `${baseUrl}/graphql`;
 const tokenUrl = `${baseUrl}/auth/token`;
 const dbPopulateUrl = `${baseUrl}/dev/db_populate`;
@@ -36,32 +36,44 @@ const profileIds = [
 
 // Suchparameter für AppProfiles (aus CSV-Daten)
 const displayNames = [
-    'Max Power',
-    'Lina Tech',
-    'Digital Nomad',
-    'Karlsruhe Dev',
-    'Focus Queen',
+    'Max%20Power',
+    'Lina%20Tech',
+    'Digital%20Nomad',
+    'Karlsruhe%20Dev',
+    'Focus%20Queen',
 ];
 const timezones = ['Europe/Berlin', 'Europe/Paris', 'Asia/Makassar'];
 const displayNamesNotFound = [
-    'Nicht Vorhanden 1',
-    'Nicht Vorhanden 2',
-    'Nicht Vorhanden 3',
+    'Nicht%20Vorhanden%201',
+    'Nicht%20Vorhanden%202',
+    'Nicht%20Vorhanden%203',
 ];
 
-// Template für ein neues AppProfile
+// Template für ein neues AppProfile (exakt nach Bruno-Vorgabe)
 const newAppProfile = {
     displayName: 'k6-Loadtest-Profile',
     avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=k6',
     statusMessage: 'Lastest mit k6',
-    timezone: 'Europe/Berlin',
     currentStreak: 0,
     onboardingCompleted: true,
+    timezone: 'Europe/Berlin',
     trackingConfig: {
+        id: 99, // Wird in postProfile() überschrieben
         dailyLimitMinutes: 120,
         isPublic: true,
         notificationsEnabled: true,
+        profileId: '7b9e8400-e29b-41d4-a716-446655440099', // Wird überschrieben
+        erzeugt: '2026-06-04',
+        aktualisiert: '2026-06-04',
     },
+    screentimeLogs: [
+        {
+            id: 100, // Wird in postProfile() überschrieben
+            logDate: '2026-06-04',
+            totalMinutes: 45,
+            topApp: 'VS Code',
+        },
+    ],
 };
 
 const tlsDir = '../../src/config/resources/tls';
@@ -286,10 +298,29 @@ export function getAllPaginated() {
 
 // POST /rest/appprofile
 export function postProfile() {
-    const profile = { ...newAppProfile };
-    // Eindeutigen Namen für jedes Profil generieren
+    // 1. Tiefe Kopie des Templates erstellen
+    const profile = JSON.parse(JSON.stringify(newAppProfile));
+
+    // 2. Eindeutigen Displaynamen generieren
     profile.displayName = `k6-Profile-${Math.random().toString(36).substr(2, 9)}`;
 
+    // 3. Eindeutige IDs für trackingConfig gewähren (z.B. Zahl zwischen 100.000 und 99.999.999)
+    const randomTrackingId = Math.floor(Math.random() * 99900000) + 100000;
+    profile.trackingConfig.id = randomTrackingId;
+
+    // 4. Eindeutige profileId (UUID-Format) generieren, um DB-Kollisionen zu vermeiden
+    const randomSuffix = Math.floor(
+        Math.random() * 900000000000 + 100000000000,
+    );
+    profile.trackingConfig.profileId = `7b9e8400-e29b-41d4-a716-${randomSuffix}`;
+
+    // 5. Eindeutige ID für das erste ScreentimeLog generieren
+    if (profile.screentimeLogs && profile.screentimeLogs.length > 0) {
+        profile.screentimeLogs[0].id =
+            Math.floor(Math.random() * 99900000) + 100000;
+    }
+
+    // --- Ab hier folgt dein normaler Request-Code ---
     const tokenHeaders: Record<string, string> = {
         'Content-Type': 'application/x-www-form-urlencoded',
     };
