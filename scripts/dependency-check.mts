@@ -23,33 +23,18 @@
 // ggf. z.B.    bun why hono
 
 import { exec } from 'node:child_process';
-import { platform } from 'node:os';
-import { resolve } from 'node:path';
 
 const nvdApiKey = '47fbc0a4-9240-4fda-9a26-d7d5624c16bf';
-const project = 'buch';
+const project = 'reclaim';
 
-let rootDir;
-let baseScript = 'dependency-check';
+let baseScript = 'dependency-check.sh';
+const rootDir = '/home/u7411/Zimmermann';
 
-// https://nodejs.org/api/os.html#osplatform
-const betriebssystem = platform(); // win32, linux, ...
-if (betriebssystem === 'win32') {
-    rootDir = resolve('C:/');
-    baseScript += '.bat';
-} else {
-    rootDir = resolve('/');
-}
-const script = resolve(
-    rootDir,
-    'Zimmermann',
-    'dependency-check',
-    'bin',
-    baseScript,
-);
+const script = rootDir + '/dependency-check/bin/' + baseScript;
+
 console.log(`script=${script}`);
 
-const dataPath = resolve(rootDir, 'Zimmermann', 'dependency-check-data');
+const dataPath = rootDir + '/dependency-check-data';
 const reportPath = '.';
 
 let options = `--nvdApiKey ${nvdApiKey} --project ${project} `.concat(
