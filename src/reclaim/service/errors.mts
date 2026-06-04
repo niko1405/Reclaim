@@ -22,7 +22,7 @@
  */
 
 /**
- * Error-Klasse für ein nicht gefundenes Buch.
+ * Error-Klasse für ein nicht gefundenes AppProfile.
  */
 export class NotFoundError extends Error {}
 

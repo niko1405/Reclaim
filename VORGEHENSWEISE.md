@@ -42,7 +42,7 @@
 
 ## Infrastruktur
 
-- Verzeichnisstruktur, Schichtenarchitektur und DDD: Service auslagern, Hello -> Buch, container für manuelle DI mit Singletons
+- Verzeichnisstruktur, Schichtenarchitektur und DDD: Service auslagern, Hello -> AppProfile, container für manuelle DI mit Singletons
 - Gruppierung und Aufteilung von Router
 - Middleware für Antwortzeit ("response time") und Request
 - Request- und Response-Body komprimieren mit "hono/compress" für GZip

@@ -98,7 +98,7 @@ export class AppProfileService {
     async findAvatarByAppProfileId(
         appProfileId: string,
     ): Promise<Readonly<ProfileAvatar> | undefined> {
-        this.#logger.debug('findFileByBuchId: buchId=%s', appProfileId);
+        this.#logger.debug('findFileByAppProfileId: buchId=%s', appProfileId);
         const profileAvatar: ProfileAvatar | null =
             await prismaClient.profileAvatar.findUnique({
                 where: { profileId: appProfileId },

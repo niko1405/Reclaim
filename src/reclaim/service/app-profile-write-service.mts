@@ -42,11 +42,11 @@ type AppProfileCreated = Prisma.AppProfileGetPayload<{
 }>;
 
 export type AppProfileUpdate = Prisma.AppProfileUpdateInput;
-/** Typdefinitionen zum Aktualisieren eines Buches mit `update`. */
+/** Typdefinitionen zum Aktualisieren eines AppProfilees mit `update`. */
 export type UpdateParams = {
-    /** ID des zu aktualisierenden Buches. */
+    /** ID des zu aktualisierenden AppProfilees. */
     readonly id: string | undefined;
-    /** Buch-Objekt mit den aktualisierten Werten. */
+    /** AppProfile-Objekt mit den aktualisierten Werten. */
     readonly appProfile: AppProfileUpdate;
     /** Versionsnummer für die zu aktualisierenden Werte. */
     readonly version: string;
@@ -57,7 +57,7 @@ type ProfileAvatarCreate = Prisma.ProfileAvatarUncheckedCreateInput;
 export type ProfileAvatarCreated = Prisma.ProfileAvatarGetPayload<{}>;
 
 /**
- * Die Klasse `BuchWriteService` implementiert den Anwendungskern für das
+ * Die Klasse `AppProfileWriteService` implementiert den Anwendungskern für das
  * Schreiben von Bücher und greift mit _Prisma_ auf die DB zu.
  */
 export class AppProfileWriteService {

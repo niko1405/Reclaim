@@ -328,7 +328,7 @@ export type AppProfilePostInput = {
     }> | null;
 };
 
-export type BuchNeuInput = AppProfilePostInput;
+export type AppProfileNeuInput = AppProfilePostInput;
 
 export const toCreate = (appProfile: AppProfilePostInput): AppProfileCreate => {
     const appProfileCreate: AppProfileCreate = {
@@ -390,7 +390,7 @@ export type AppProfileUpdateInput = {
     onboardingCompleted?: boolean | undefined;
 };
 
-export type BuchUpdateInput = AppProfileUpdateInput;
+export type AppProfileUpdateInput = AppProfileUpdateInput;
 
 export const toUpdate = (
     appProfile: AppProfileUpdateInput,
