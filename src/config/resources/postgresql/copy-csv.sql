@@ -17,7 +17,11 @@
 
 SET search_path TO reclaim;
 
--- https://www.postgresql.org/docs/current/sql-copy.html
-COPY app_profile FROM '/init/reclaim/csv/app_profile.csv' (FORMAT csv, DELIMITER ';', HEADER true);
-COPY screentime_log FROM '/init/reclaim/csv/screentime_log.csv' (FORMAT csv, DELIMITER ';', HEADER true);
-COPY tracking_config FROM '/init/reclaim/csv/tracking_config.csv' (FORMAT csv, DELIMITER ';', HEADER true);
+COPY app_profile (id, display_name, avatar_url, status_message, timezone, current_streak, onboarding_completed, version, erzeugt, aktualisiert) 
+FROM '/init/reclaim/csv/app_profile.csv' (FORMAT csv, DELIMITER ';', HEADER true);
+
+COPY screentime_log (id, log_date, total_minutes, top_app, profile_id, erzeugt, aktualisiert) 
+FROM '/init/reclaim/csv/screentime_log.csv' (FORMAT csv, DELIMITER ';', HEADER true);
+
+COPY tracking_config (id, daily_limit_minutes, is_public, notifications_enabled, profile_id, erzeugt, aktualisiert) 
+FROM '/init/reclaim/csv/tracking_config.csv' (FORMAT csv, DELIMITER ';', HEADER true);

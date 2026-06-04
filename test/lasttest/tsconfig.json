@@ -1,9 +1,6 @@
 {
   "extends": "../../tsconfig.json",
-  "include": [
-    "script.ts",
-    "../../src/reclaim/router/app-profile-validation.mts"
-  ],
+  "include": ["script.ts"],
   "compilerOptions": {
     // https://www.typescriptlang.org/tsconfig/#isolatedModules
     "isolatedModules": true,
