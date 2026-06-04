@@ -1,0 +1,57 @@
+info:
+  name: Neues AppProfile
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: "{{restUrl}}"
+  headers:
+    - name: ""
+      value: ""
+      disabled: true
+  body:
+    type: json
+    data: |-
+      {
+        "displayName": "Code Ninja",
+        "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ninja",
+        "statusMessage": "Im Tunnel...",
+        "currentStreak": 3,
+        "onboardingCompleted": true,
+        "timezone": "Europe/Berlin",
+        "trackingConfig": {
+          "id": 99,
+          "dailyLimitMinutes": 90,
+          "isPublic": true,
+          "notificationsEnabled": true,
+          "profileId": "7b9e8400-e29b-41d4-a716-446655440099",
+          "erzeugt": "2026-06-04",
+          "aktualisiert": "2026-06-04"
+        },
+        "screentimeLogs": [
+          {
+            "id": 100,
+            "logDate": "2026-06-04",
+            "totalMinutes": 45,
+            "topApp": "VS Code"
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "201"
+    - expression: res.body
+      operator: isString
+    - expression: res.body
+      operator: isEmpty
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

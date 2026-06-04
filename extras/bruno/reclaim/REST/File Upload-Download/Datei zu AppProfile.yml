@@ -1,15 +1,15 @@
 info:
-  name: Anzahl
+  name: Datei zu AppProfile
   type: http
-  seq: 8
+  seq: 2
 
 http:
   method: GET
-  url: "{{restUrl}}?count-only=true"
+  url: "{{restUrl}}/file/:id"
   params:
-    - name: count-only
-      value: "true"
-      type: query
+    - name: id
+      value: "1"
+      type: path
   auth: inherit
 
 runtime:

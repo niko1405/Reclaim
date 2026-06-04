@@ -1,7 +1,7 @@
 info:
   name: Neuanlegen OAuth 2 Authorization Code
   type: folder
-  seq: 6
+  seq: 2
 
 request:
   auth:
@@ -20,6 +20,12 @@ request:
       id: credentials
       placement:
         header: Bearer
+      source: access_token
     settings:
       autoFetchToken: true
       autoRefreshToken: false
+  variables:
+    - name: clientId
+      value: javascript-client
+    - name: clientSecret
+      value: vDorIIwidFF8mjrgIWoLMR7mOY0mC1mr

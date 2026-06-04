@@ -1,7 +1,7 @@
 info:
-  name: AppProfile mit ID aktualisieren
+  name: AppProfile mit ID
   type: graphql
-  seq: 4
+  seq: 2
 
 graphql:
   method: POST
@@ -11,20 +11,27 @@ graphql:
       value: application/graphql-response+json
   body:
     query: |-
-      mutation UpdateExistingProfile($input: AppProfileUpdateInput!) {
-        update(input: $input) {
+      query FindProfileById($id: ID!) {
+        appProfile(id: $id) {
+          id
           version
+          displayName
+          statusMessage
+          timezone
+          trackingConfig {
+            dailyLimitMinutes
+            isPublic
+          }
+          screentimeLogs {
+            logDate
+            totalMinutes
+            topApp
+          }
         }
       }
     variables: |-
       {
-        "input": {
-          "id": "550e8400-e29b-41d4-a716-446655440001",
-          "version": 0,
-          "displayName": "Max Power [GraphQL Update]",
-          "statusMessage": "Bin im GraphQL-Tunnel...",
-          "currentStreak": 6
-        }
+        "id": "550e8400-e29b-41d4-a716-446655440003"
       }
   auth: inherit
 
@@ -36,11 +43,6 @@ runtime:
     - expression: res.headers['content-type']
       operator: matches
       value: ^application\/graphql-response\+json(; charset=utf-8)?$
-    - expression: res.body.data.update.version
-      operator: isNumber
-    - expression: res.body.data.update.version
-      operator: gte
-      value: "0"
 
 settings:
   encodeUrl: true

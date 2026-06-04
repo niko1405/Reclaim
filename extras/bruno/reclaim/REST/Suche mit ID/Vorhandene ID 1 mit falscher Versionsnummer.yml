@@ -13,7 +13,7 @@ http:
       value: "0"
   params:
     - name: id
-      value: "1"
+      value: 550e8400-e29b-41d4-a716-446655440001
       type: path
   auth: inherit
 
@@ -27,7 +27,7 @@ runtime:
       value: ^application\/json(; charset=utf-8)?$
     - expression: res.body.id
       operator: eq
-      value: "1"
+      value: 550e8400-e29b-41d4-a716-446655440001
 
 settings:
   encodeUrl: true

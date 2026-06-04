@@ -1,7 +1,7 @@
 info:
   name: AppProfile mit ID mit ungültigen Daten aktualisieren
   type: graphql
-  seq: 6
+  seq: 5
 
 graphql:
   method: POST
@@ -11,22 +11,19 @@ graphql:
       value: application/graphql-response+json
   body:
     query: |-
-      mutation {
-        update(
-          input: {
-            id: 40,
-            version: 0,
-            isbn: "falsche-ISBN",
-            rating: -1,
-            art: HARDCOVER,
-            preis: 1,
-            rabatt: 0,
-            lieferbar: false,
-            datum: "12345-123-123",
-            homepage: "anyHomepage"
-          }
-        ) {
-            version
+      mutation UpdateExistingProfile($input: AppProfileUpdateInput!) {
+        update(input: $input) {
+          version
+        }
+      }
+    variables: |-
+      {
+        "input": {
+          "id": "550e8400-e29b-41d4-a716-446655440001",
+          "version": 4,
+          "displayName": "Max Power [GraphQL Update]",
+          "statusMessage": "Bin im GraphQL-Tunnel...",
+          "currentStreak": "6"
         }
       }
   auth: inherit
@@ -35,7 +32,7 @@ runtime:
   assertions:
     - expression: res.status
       operator: eq
-      value: "200"
+      value: "400"
     - expression: res.headers['content-type']
       operator: matches
       value: ^application\/graphql-response\+json(; charset=utf-8)?$
@@ -44,26 +41,6 @@ runtime:
     - expression: res.body.errors
       operator: length
       value: "1"
-    - expression: res.body.errors[0].message
-      operator: contains
-      value: isbn
-    - expression: res.body.errors[0].message
-      operator: contains
-      value: datum
-    - expression: res.body.errors[0].message
-      operator: contains
-      value: homepage
-    - expression: res.body.errors[0].path
-      operator: isArray
-    - expression: res.body.errors[0].path
-      operator: length
-      value: "1"
-    - expression: res.body.errors[0].path[0]
-      operator: eq
-      value: update
-    - expression: res.body.errors[0].extensions.code
-      operator: eq
-      value: BAD_USER_INPUT
 
 settings:
   encodeUrl: true

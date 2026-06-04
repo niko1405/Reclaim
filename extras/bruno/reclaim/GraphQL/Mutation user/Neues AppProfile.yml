@@ -11,29 +11,32 @@ graphql:
       value: application/graphql-response+json
   body:
     query: |-
-      mutation {
-        create(
-          input: {
-            isbn: "978-3-864-90958-0",
-            rating: 1,
-            art: HARDCOVER,
-            preis: 99.99,
-            rabatt: 0.123,
-            lieferbar: true,
-            datum: "2025-01-31T00:00:00Z",
-            homepage: "https://create.mutation",
-            schlagwoerter: ["JAVASCRIPT", "TYPESCRIPT"],
-            titel: {
-              titel: "Titelcreatemutation",
-              untertitel: "untertitelcreatemutation"
-            },
-            abbildungen: [{
-              beschriftung: "Abb. 1",
-              contentType: "img/png"
-            }]
-          }
-        ) {
-            id
+      mutation CreateProfile($input: AppProfilePostInput!) {
+        create(input: $input) {
+          id
+        }
+      }
+    variables: |-
+      {
+        "input": {
+          "displayName": "GraphQL Native Ninja",
+          "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=GraphQL",
+          "statusMessage": "Jetzt läuft es sauber getrennt!",
+          "timezone": "Europe/Berlin",
+          "currentStreak": 5,
+          "onboardingCompleted": true,
+          "trackingConfig": {
+            "dailyLimitMinutes": 45,
+            "isPublic": true,
+            "notificationsEnabled": true
+          },
+          "screentimeLogs": [
+            {
+              "logDate": "2026-06-04",
+              "totalMinutes": 15,
+              "topApp": "Bruno Client"
+            }
+          ]
         }
       }
   auth: inherit

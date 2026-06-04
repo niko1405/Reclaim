@@ -1,27 +1,25 @@
 info:
-  name: Vorhandene ID 1 mit If-None-Match
+  name: AppProfile löschen
   type: http
-  seq: 2
+  seq: 1
 
 http:
-  method: GET
+  method: DELETE
   url: "{{restUrl}}/:id"
-  headers:
-    - name: Accept
-      value: application/json
-    - name: If-None-Match
-      value: '"0"'
   params:
     - name: id
-      value: 550e8400-e29b-41d4-a716-446655440001
+      value: 550e8400-e29b-41d4-a716-446655440003
       type: path
+  body:
+    type: json
+    data: ""
   auth: inherit
 
 runtime:
   assertions:
     - expression: res.status
       operator: eq
-      value: "304"
+      value: "204"
     - expression: res.body
       operator: isString
     - expression: res.body

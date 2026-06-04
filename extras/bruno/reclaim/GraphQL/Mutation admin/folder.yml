@@ -1,7 +1,7 @@
 info:
   name: Mutation admin
   type: folder
-  seq: 2
+  seq: 1
 
 request:
   auth:
@@ -23,6 +23,15 @@ request:
     settings:
       autoFetchToken: true
       autoRefreshToken: false
+  variables:
+    - name: username
+      value: admin
+    - name: password
+      value: p
+    - name: clientId
+      value: javascript-client
+    - name: clientSecret
+      value: vDorIIwidFF8mjrgIWoLMR7mOY0mC1mr
 
 docs:
   content: Neuanlegen, Ändern und Löschen mit der GraphQL-Schnittstelle

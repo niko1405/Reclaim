@@ -1,11 +1,26 @@
 info:
-  name: DB neu laden
+  name: Neues Avatar-Bild
   type: http
   seq: 1
 
 http:
   method: POST
-  url: "{{baseUrl}}/dev/db_populate"
+  url: "{{restUrl}}/:id"
+  headers:
+    - name: ""
+      value: ""
+      disabled: true
+  params:
+    - name: id
+      value: 550e8400-e29b-41d4-a716-446655440003
+      type: path
+  body:
+    type: multipart-form
+    data:
+      - name: file
+        type: file
+        value:
+          - /home/u7411/Downloads/IMG-20260309-WA0039.jpg
   auth:
     type: oauth2
     flow: resource_owner_password_credentials
@@ -27,25 +42,14 @@ http:
       autoRefreshToken: false
 
 runtime:
-  variables:
-    - name: username
-      value: admin
-    - name: password
-      value: p
-    - name: clientId
-      value: javascript-client
-    - name: clientSecret
-      value: vDorIIwidFF8mjrgIWoLMR7mOY0mC1mr
   assertions:
     - expression: res.status
       operator: eq
-      value: "200"
-    - expression: res.headers['content-type']
-      operator: matches
-      value: ^application\/json(; charset=utf-8)?
-    - expression: res.body.db_populate
-      operator: eq
-      value: ok
+      value: "204"
+    - expression: res.body
+      operator: isString
+    - expression: res.body
+      operator: isEmpty
 
 settings:
   encodeUrl: true

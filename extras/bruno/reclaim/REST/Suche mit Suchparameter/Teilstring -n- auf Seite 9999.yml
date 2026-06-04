@@ -5,12 +5,12 @@ info:
 
 http:
   method: GET
-  url: "{{restUrl}}?titel=n&page=9999"
+  url: "{{restUrl}}?displayName=n&page=9999"
   headers:
     - name: Accept
       value: application/json
   params:
-    - name: titel
+    - name: displayName
       value: n
       type: query
     - name: page

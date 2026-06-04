@@ -1,0 +1,61 @@
+info:
+  name: Neues AppProfile mit ungültigen Daten
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: "{{restUrl}}"
+  headers:
+    - name: ""
+      value: ""
+      disabled: true
+  body:
+    type: json
+    data: |-
+      {
+        "id": "7b9e8400-e29b-41d4-a716-446655440099",
+        "displayName": "Code Ninja",
+        "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ninja",
+        "statusMessage": "Im Tunnel...",
+        "currentStreak": 3,
+        "onboardingCompleted": true,
+        "trackingConfig": {
+          "dailyLimitMinutes": 90,
+          "isPublic": true,
+          "notificationsEnabled": true
+        },
+        "screentimeLogs": [
+          {
+            "logDate": "2026-06-04T00:00:00.000Z",
+            "totalMinutes": 45,
+            "topApp": "VS Code"
+          }
+        ]
+      }
+  auth: inherit
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "422"
+    - expression: res.headers['content-type']
+      operator: eq
+      value: application/problem+json
+    - expression: res.body
+      operator: isJson
+    - expression: res.body
+      operator: isNotEmpty
+    - expression: res.body.statusCode
+      operator: eq
+      value: "422"
+    - expression: res.body.title
+      operator: eq
+      value: Unprocessable Content
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

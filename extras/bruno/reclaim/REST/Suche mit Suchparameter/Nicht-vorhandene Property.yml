@@ -1,7 +1,7 @@
 info:
   name: Nicht-vorhandene Property
   type: http
-  seq: 22
+  seq: 7
 
 http:
   method: GET

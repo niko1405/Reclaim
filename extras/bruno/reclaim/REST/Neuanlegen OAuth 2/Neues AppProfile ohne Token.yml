@@ -1,0 +1,55 @@
+info:
+  name: Neues AppProfile ohne Token
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: "{{restUrl}}"
+  headers:
+    - name: ""
+      value: ""
+      disabled: true
+  body:
+    type: json
+    data: |-
+      {
+        "displayName": "Code Ninja",
+        "avatarUrl": "https://api.dicebear.com/7.x/avataaars/svg?seed=Ninja",
+        "statusMessage": "Im Tunnel...",
+        "currentStreak": 3,
+        "onboardingCompleted": true,
+        "timezone": "Europe/Berlin",
+        "trackingConfig": {
+          "id": 99,
+          "dailyLimitMinutes": 90,
+          "isPublic": true,
+          "notificationsEnabled": true,
+          "profileId": "7b9e8400-e29b-41d4-a716-446655440099",
+          "erzeugt": "2026-06-04",
+          "aktualisiert": "2026-06-04"
+        },
+        "screentimeLogs": [
+          {
+            "id": 100,
+            "logDate": "2026-06-04",
+            "totalMinutes": 45,
+            "topApp": "VS Code"
+          }
+        ]
+      }
+
+runtime:
+  assertions:
+    - expression: res.status
+      operator: eq
+      value: "401"
+    - expression: res.headers['content-type']
+      operator: eq
+      value: application/problem+json
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

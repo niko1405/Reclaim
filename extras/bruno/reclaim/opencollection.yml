@@ -1,7 +1,7 @@
 opencollection: 1.0.0
 
 info:
-  name: buch
+  name: reclaim
 config:
   proxy:
     inherit: true

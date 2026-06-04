@@ -20,6 +20,11 @@ http:
   auth: inherit
 
 runtime:
+  variables:
+    - name: username
+      value: admin
+    - name: password
+      value: p
   assertions:
     - expression: res.status
       operator: eq
