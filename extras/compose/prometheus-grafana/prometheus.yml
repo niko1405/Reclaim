@@ -31,4 +31,4 @@ scrape_configs:
     static_configs:
       - targets: ["host.docker.internal:3000"]
         labels:
-          application: buch
+          application: reclaim

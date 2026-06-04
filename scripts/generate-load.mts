@@ -25,7 +25,6 @@ const sleep = (millis: number) => {
 };
 
 // selbst-signiertes Zertifikat ignorieren
-// https://github.com/orgs/nodejs/discussions/44038
 env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
 const options: RequestInit = {
@@ -34,27 +33,41 @@ const options: RequestInit = {
     },
 };
 
-for (let index = 1; ; index++) {
-    let id;
-    if (index % 2 === 0) {
-        id = 20;
-    } else if (index % 3 === 0) {
-        id = 30;
-    } else if (index % 5 === 0) {
-        id = 40;
-    } else if (index % 7 === 0) {
-        id = 50;
-    } else {
-        id = 1;
-    }
-    console.log(`id=${id}`);
+// Deine echten UUIDs aus den CSV-Mockdaten
+const uuids = [
+    '550e8400-e29b-41d4-a716-446655440001', // Max Power
+    '550e8400-e29b-41d4-a716-446655440002', // Lina Tech
+    '550e8400-e29b-41d4-a716-446655440003', // Digital Nomad
+    '550e8400-e29b-41d4-a716-446655440004', // Karlsruhe Dev
+    '550e8400-e29b-41d4-a716-446655440005', // Focus Queen
+];
 
+console.log('Starte Lastgenerator für Prometheus/Grafana...');
+console.log('Drücke Strg+C zum Beenden.');
+console.log('');
+
+for (let index = 0; ; index++) {
+    // Holt die UUIDs der Reihe nach (zyklisch) aus dem Array ab
+    const id = uuids[index % uuids.length];
+
+    console.log(`[Request #${index + 1}] Rufe Profil ab mit ID: ${id}`);
+
+    // Endpunkt korrigiert auf /rest/<id>
     const url = `https://localhost:3000/rest/${id}`;
 
-    // https://nodejs.org/dist/latest-v23.x/docs/api/globals.html#fetch
-    const response = await fetch(url, options);
-    if (response.status !== 200) {
-        console.error(`Fehler bei id=${id}`);
+    try {
+        const response = await fetch(url, options);
+        if (response.status !== 200) {
+            console.error(
+                `❌ Fehler bei id=${id}: HTTP Status ${response.status}`,
+            );
+        } else {
+            // Optional: Wenn du den Inhalt nicht brauchst, reicht der Status
+            // Aber das Auslesen stellt sicher, dass der Stream komplett verarbeitet wird
+            await response.json();
+        }
+    } catch (error) {
+        console.error(`🚨 Netzwerkfehler beim Abruf von id=${id}:`, error);
     }
 
     await sleep(SLEEP_IN_MILLIS);
