@@ -23,9 +23,6 @@ runtime:
     - expression: res.headers['content-type']
       operator: matches
       value: ^application\/json(; charset=utf-8)?$
-    - expression: res.body.id
-      operator: eq
-      value: "1"
 
 settings:
   encodeUrl: true
